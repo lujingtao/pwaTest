@@ -1,65 +1,43 @@
 <template>
-  <div class="mapWrap">
+  <div id="mapWrap">
     <canvas id="map"></canvas>
   </div>
 </template>
 
 <script>
+  import Map from '../class/Map.js';
   export default {
     data() {
       return {
         unitSize: 0,
         divs: 10, //竖向屏幕划分多少份
-        cols:0,
-        rows:0,
+        cols: 0,
+        rows: 0,
         $map: null,
+        map:null,
       }
     },
     mounted() {
       this.initDatas();
-      this.createMap(this.$map, this.unitSize, this.cols, this.rows);
+      this.map.createMap(this.$map, this.unitSize, this.cols, this.rows);
+      this.map.initEvent(this.$map);
     },
     methods: {
+
+      //初始化数据
       initDatas() {
         this.$map = document.getElementById("map");
-        let docWidth = document.documentElement.clientWidth;
         let docHeight = document.documentElement.clientHeight;
-        console.log(docWidth, docHeight);
-        this.$map.width = docWidth * 2;
-        this.$map.height = docHeight * 1.5;
+
         this.unitSize = parseInt(docHeight / this.divs);
-        this.cols = parseInt(this.$map.width / this.unitSize);
-        this.rows = parseInt(this.$map.height / this.unitSize);
+        this.cols = Math.round(this.divs * 2);
+        this.rows = Math.round(this.divs * 1.5);
+        this.$map.width = this.unitSize * this.cols;
+        this.$map.height = this.unitSize * this.rows;
+        
+        this.map = new Map;
       },
 
-      createMap(map, unitSize, cols, rows) {
-        var ctx = map.getContext("2d");
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 1;
-        
-        //画x坐标线
-        for (let i = 0; i < cols; i++) {
-          ctx.beginPath();
-          ctx.moveTo(unitSize * i + 0.5, 0);
-          ctx.lineTo(unitSize * i + 0.5, unitSize * rows + 0.5);
-          ctx.stroke();
-        }
-        //画y坐标线
-        for (let i = 0; i < rows; i++) {
-          ctx.beginPath();
-          ctx.moveTo(0, unitSize * i + 0.5);
-          ctx.lineTo(unitSize * cols + 0.5, unitSize * i + 0.5);
-          ctx.stroke();
-        }
-        
-        //偏移0.5px来修复1px像素线bug,偏移后右/下线看不到,所以再补回来
-        ctx.moveTo(0, unitSize * rows - 0.5);
-        ctx.lineTo(unitSize * cols - 0.5, unitSize * rows - 0.5);
-        ctx.stroke();
-        ctx.moveTo(unitSize * cols - 0.5, 0);
-        ctx.lineTo(unitSize * cols - 0.5, unitSize * rows - 0.5);
-        ctx.stroke();
-      }
     },
     components: {
 
@@ -68,15 +46,21 @@
 </script>
 
 <style>
-  .mapWrap{
+  #mapWrap {
     width: 100%;
     height: 100%;
+    position: relative;
+    /*   overflow: auto;
     overflow: auto;
     overflow: -moz-scrollbars-none;
-    -webkit-overflow-scrolling:auto;
+    -webkit-overflow-scrolling:touch; */
   }
-  .mapWrap::-webkit-scrollbar { width: 0 !important; display: none; }
+
+  /* .mapWrap::-webkit-scrollbar { width: 0 !important; display: none; } */
   #map {
+    position: absolute;
+    left: 0;
+    top: 0;
     background: #333;
   }
 </style>
