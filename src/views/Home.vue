@@ -73,8 +73,9 @@
     height: 100%;
     overflow: auto;
     overflow: -moz-scrollbars-none;
+    -webkit-overflow-scrolling:auto;
   }
-
+  .mapWrap::-webkit-scrollbar { width: 0 !important; display: none; }
   #map {
     background: #333;
   }

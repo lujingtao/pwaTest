@@ -11,7 +11,7 @@ if (process.env.NODE_ENV === 'production') {
       )
     },
     registered () {
-      register.update();
+      register.update(); //强制更新
       console.log('Service worker has been registered.')
     },
     cached () {
