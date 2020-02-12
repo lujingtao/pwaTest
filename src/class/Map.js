@@ -44,10 +44,13 @@ export default class Map {
     var startY = 0;
   
     var start = function(e) {
-      console.log("touchStart");
+      //console.log("touchStart");
       var point = hasTouch ? e.touches[0] : e;
       startX = point.pageX - Number(touchArea.style.left.replace("px", ""));
       startY = point.pageY - Number(touchArea.style.top.replace("px", ""));
+      
+      touchArea.addEventListener(touchMove, move, false);
+      touchArea.addEventListener(touchEnd, end, false);
     }
   
     var move = function(e) {
@@ -56,8 +59,15 @@ export default class Map {
       touchArea.style.left = point.pageX - startX + "px";
       touchArea.style.top = point.pageY - startY + "px";
     }
+    
+    var end = function(e) {
+					touchArea.removeEventListener(touchStart, end, false);
+					touchArea.removeEventListener(touchMove, move, false);
+					touchArea.removeEventListener(touchEnd, end, false);
+    }
+    
     touchArea.addEventListener(touchStart, start, false);
-    touchArea.addEventListener(touchMove, move, false);
+    
   }
   
 }
