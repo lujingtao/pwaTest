@@ -1,15 +1,13 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Home from '../views/Home.vue'
+import Home from '../views/Home/Home.vue'
 import Battle from '../views/Battle.vue'
-import Team from '../views/Team.vue'
+import Team from '../views/Team/Team.vue'
 import option_Save from '../views/option/Save.vue'
 import option_Load from '../views/option/Load.vue'
 import option_Setting from '../views/option/Setting.vue'
-import city_home from '../views/city/Home.vue'
 import city_market from '../views/city/Market.vue'
 import city_tavern from '../views/city/Tavern.vue'
-import city_board from '../views/city/Board.vue'
 import Start from '../views/Start.vue'
 
 Vue.use(VueRouter)
@@ -17,10 +15,10 @@ Vue.use(VueRouter)
 const routes = [{
     path: '/',
     meta: { title: '开始' },
-    component: Team
+    component: Home
   },
   {
-    path: '/home',
+    path: '/Home',
     meta: { title: '世界地图' },
     component: Home
   },
@@ -48,16 +46,6 @@ const routes = [{
     path: '/option/Setting',
     meta: { title: '设置' },
     component: option_Setting
-  },
-  {
-    path: '/city/home',
-    meta: { title: '城市首页' },
-    component: city_home
-  },
-  {
-    path: '/city/board',
-    meta: { title: '任务板' },
-    component: city_board
   },
   {
     path: '/city/market',

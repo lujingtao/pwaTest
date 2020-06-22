@@ -196,34 +196,19 @@
         if (rand < (1 - x * xCount)) return i;
       }
     },
-    //计算身高体重比
-    getBMI: function(peo) {
-      var r = 0;
-      var BMI = peo.wei / (peo.hei / 100 * peo.hei / 100);
-      if (BMI < 20) { r = 0; } else if (BMI >= 20 && BMI <= 25) { r = 1; } else if (BMI > 25 && BMI <= 30) { r =
-          2; } else if (BMI > 30) { r = 3; }
-      return r;
+    
+    //根据typeid获取类型名称
+    getTypeName: function(table,typeId) {
+      return data[table].find( item=> item.id==typeId).type;
     },
-    //根据BMI和体质获取身体状况
-    getStature: function(peo) {
-      var r = 0;
-      var BMI = common.getBMI(peo);
-      var phy = peo.phy;
-      if (phy <= 30) { phy = 0 } else if (phy > 30 && phy < 70) { phy = 1 } else if (phy >= 70) { phy = 2 }
-      if (BMI == 0 && phy == 0) { r = 0 } else if (BMI == 0 && phy == 1) { r = 1 } else if (BMI == 0 && phy == 2) { r
-          = 2 } else if (BMI == 1 && phy == 0) { r = 3 } else if (BMI == 1 && phy == 1) { r = 4 } else if (BMI ==
-        1 && phy == 2) { r = 5 } else if (BMI == 2 && phy == 0) { r = 6 } else if (BMI == 2 && phy == 1) { r = 7 } else if (
-        BMI == 2 && phy == 2) { r = 8 } else if (BMI == 3 && phy == 0) { r = 9 } else if (BMI == 3 && phy == 1) { r
-          = 10 } else if (BMI == 3 && phy == 2) { r = 11 }
-      return r;
+    
+    //根据goodsId获取物品对象
+    getGoods: function(goodsId,list) {
+      if(goodsId==""||goodsId==undefined) return undefined;
+      return game.curSave[list].find( item=>item.id==goodsId );
     },
-    //计算人员移动范围(根据身高体重比)
-    getMoveSize: function(peo) {
-      var r = 2;
-      var BMI = common.getBMI(peo);
-      if (peo.hei >= 195 && BMI <= 1) { r = 3; } else if (BMI > 1) { r = 1; }
-      return r;
-    },
+    
+    
   }
 })();
 

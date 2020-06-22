@@ -8,7 +8,7 @@
         <label><i class="iconfont icon-2-0"></i>{{$store.state.medication}}</label>
         <label><i class="iconfont icon-3-0"></i>{{$store.state.arrow}}</label>
       </span>
-      <label><van-icon name="calender-o" />{{$store.state.date}}</label>
+      <label>第{{$store.state.date}}天</label>
     </div>
   </Header>
 </template>

@@ -45,16 +45,15 @@ html,body,#app{
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background: #333;
+  background: #000;
+  color: #fff;
+  text-align: center;
 }
   
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  
 }
 .disTable{
   display: table;
@@ -88,7 +87,7 @@ html,body,#app{
   height: 30px;
   line-height: 30px;
   color:#fff;
-  background: #444;
+  background: #232323;
   font-size: 12px;
   text-align: left;
   .pull-right label{
@@ -141,7 +140,7 @@ html,body,#app{
 
 //覆盖默认样色
 .van-tabbar{
-  background: #444;
+  background: #232323;
   color:#fff;
 }
 .van-tabbar-item{
@@ -149,6 +148,33 @@ html,body,#app{
 }
 .van-hairline--top-bottom::after, .van-hairline-unset--top-bottom::after{
   border-width:0;
+}
+.van-tag{
+  margin:0 2px;
+}
+
+.van-panel,
+.van-cell-group{
+  background: none;
+}
+.van-dialog,
+.van-button--default,
+.van-action-sheet__cancel, 
+.van-action-sheet__item,
+.van-popup,
+.van-action-sheet__cancel::before,
+.van-cell{
+  background: #222;
+  color: #fff;
+}
+.van-cell:not(:last-child)::after{
+  border:0
+}
+.van-dialog__message--has-title{
+  color: #fff;
+}
+.van-action-sheet__cancel:active, .van-action-sheet__item:active{
+  background: #000000;
 }
 
 </style>

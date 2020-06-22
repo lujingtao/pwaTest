@@ -6,7 +6,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     gold: 0, 
-    date: "",
+    date: 0,
     food: 0,
     repair: 0,
     medication: 0,
@@ -14,7 +14,8 @@ export default new Vuex.Store({
   },
   mutations: {
     updateStore(state, val) {
-      state.date = common.formatDate(game.curSave.date);
+      if(!game.curSave) return;
+      state.date = game.curSave.date;
       state.gold = game.curSave.gold;
       state.food = game.curSave.food;
       state.repair = game.curSave.repair;

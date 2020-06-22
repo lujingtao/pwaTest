@@ -1,5 +1,4 @@
 import Map from '../class/Map.js';
-import People from '../class/People.js';
 
 export default class Game {
   constructor() {
@@ -12,26 +11,14 @@ export default class Game {
     this.data = {};
     //地图对象
     this.map = null;
-    //人员对象
-    this.people = null;
     //所有存档
     this.saveFiles = [];
     //当前存档内容
     this.curSave = null;
-    //开始游戏时生成城市数
-    this.createCityCount = 3;
-    //人员刷新间隔（秒）
-    this.peosUpdateIntervalTime = 60;
     //人员刷新数量
-    this.peosUpdateCount = this.createCityCount*5;
-    //商品刷新间隔（秒）
-    this.goodsUpdateIntervalTime = 60;
+    this.peosUpdateCount = 8;
     //商品刷新数量
-    this.goodsUpdateCount = 30;
-    //任务刷新间隔（秒）
-    this.tasksUpdateIntervalTime = 60;
-
-    
+    this.goodsUpdateCount = 20;
   }
   //初始化
   init() {
@@ -83,7 +70,13 @@ export default class Game {
   load(savefileId) {
     var key = this.webStorageKey(savefileId);
     var data = localStorage.getItem(key);
-    return JSON.parse(LZString.decompressFromBase64(data));
+    if(data){
+      return JSON.parse(LZString.decompressFromBase64(data));
+    }else{
+      console.error("读取存档失败，找不到id为"+savefileId+"的存档。");
+      return []
+    }
+    
   };
 
   removeSave(savefileId) {

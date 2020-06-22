@@ -18,7 +18,7 @@
                   <span v-else class="pull-right" style="color: #f00;">
                     ${{curItem.price}}（买不起）
                   </span>物品：<strong>{{curItem.name}}</strong></p>
-                <p class="des">描述：{{data.goods[curItem.typeId].des}}</p>
+                <p class="des">描述：{{data.goods[curItem.type].des}}</p>
                 <p v-if="JSON.stringify(curItem.effect) != '{}'">
                   效果：待处理
                 </p>
@@ -34,23 +34,22 @@
                 <ul class="attr">
                   <li>攻击力：{{curItem.atk}}</li>
                   <li>双手：{{ curItem.th==0?"否":"是" }}</li>
-                  <li>破马率：{{ parseInt(curItem.bh*100)+"%"}}</li>
-                  <li>破甲率：{{ parseInt(curItem.ba*100)+"%"}}</li>
-                  <li>穿甲率：{{ parseInt(curItem.bh*100)+"%"}}</li>
-                  <li>破盾率：{{ parseInt(curItem.bs*100)+"%"}}</li>
-                  <li>命中率：{{ parseInt(curItem.hit*100)+"%"}}</li>
-                  <li>爆头率：{{ parseInt(curItem.hh*100)+"%"}}</li>
+                  <li>破马率：{{ curItem.bh+"%"}}</li>
+                  <li>破甲率：{{ curItem.ba+"%"}}</li>
+                  <li>穿甲率：{{ curItem.pa+"%"}}</li>
+                  <li>破盾率：{{ curItem.bs+"%"}}</li>
+                  <li>命中率：{{ curItem.hit+"%"}}</li>
+                  <li>爆头率：{{ curItem.hh+"%"}}</li>
                   <li>攻击范围：{{curItem.range}}</li>
                 </ul>
               </div>
             </div>
           </section>
           <section class="items">
-
             <van-grid :column-num="4" :gutter="10">
               <van-grid-item v-for="item in items" :key="item.id" :id="'item_'+item.id" @click="clickItem(item)"
                 :canbuy="item.canbuy">
-                <i :class="['iconfont','icon-'+item.typeId+'-'+item.qua]"></i>
+                <i :class="['iconfont','icon-'+item.type+'-'+item.qua]"></i>
                 <span class="van-grid-item__text">{{item.name}}</span>
                 <i class="price">${{item.price}}</i>
                 <van-button style="display: none;" v-if="item.canbuy" type="primary" @click="buy(item)">购买</van-button>
@@ -62,12 +61,11 @@
       </div>
     </section>
     <HeaderBar></HeaderBar>
-    <FooterBack></FooterBack>
+    <FooterNav></FooterNav>
   </div>
 </template>
 <script>
-  import HeaderBar from '@/components/HeaderBar.vue';
-  import FooterBack from '@/components/FooterBack.vue';
+
   export default {
     data() {
       return {
@@ -79,7 +77,7 @@
       // game.curSave = game.load(1);
       // let id = 2;
       let id = this.$route.query.id;
-      this.items = game.curSave.goods.filter(p => p.buildingId == id);
+      this.items = game.curSave.goods;
       this.items.sort((a, b) => { return a.price - b.price });
       this.updateCanBuy();
     },
@@ -111,7 +109,7 @@
         game.curSave.gold -= item.price;
 
         //判断是否消耗品
-        switch (item.typeId) {
+        switch (item.type) {
           case 0:
             game.curSave.food += 100;
             break;
@@ -134,16 +132,8 @@
         //删除curSave里面的物品
         let index = game.curSave.goods.findIndex(p => p.id == item.id);
         game.curSave.goods.splice(index, 1);
-        //删除本页面的物品
-        let index1 = this.items.findIndex(p => p.id == item.id);
-        this.items.splice(index1, 1);
-        this.updateCanBuy();
       },
     },
-    components: {
-      FooterBack,
-      HeaderBar
-    }
   }
 </script>
 
@@ -176,7 +166,7 @@
       }
 
       .attr {
-        color: #999;
+        color: #aaa;
         display: flex;
         flex-wrap: wrap;
 
@@ -189,54 +179,55 @@
         margin: 0;
       }
     }
-
-    .items {
+  }
+  
+  .items {
+    position: absolute;
+    margin: 0 -10px;
+    overflow-y: auto;
+    top: 202px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  
+    .item {
+      position: relative;
+    }
+  
+    .van-button {
       position: absolute;
-      margin: 0 -10px;
-      overflow-y: auto;
-      top: 202px;
-      left: 0;
-      right: 0;
-      bottom: 0;
-
-      .item {
-        position: relative;
-      }
-
-      .van-button {
-        position: absolute;
-        left: 10px;
-        top: 10px;
-        bottom: 10px;
-        right: 10px;
-        height: auto;
-        padding: 0;
-        width: calc(100% - 20px);
-        opacity: .9;
-      }
-
-      .iconfont {
-        font-size: 28px;
-      }
-
-      .van-grid-item__text {
-        color: #fff;
-        margin-top: 5px;
-      }
-
-      .van-grid-item__content {
-        background: #333;
-      }
-
-      .van-grid-item[canbuy='false'] .van-grid-item__content {
-        background: #444;
-      }
-
-      .price {
-        position: absolute;
-        top: 5px;
-        left: 5px;
-      }
+      left: 10px;
+      top: 10px;
+      bottom: 10px;
+      right: 10px;
+      height: auto;
+      padding: 0;
+      width: calc(100% - 20px);
+      opacity: .9;
+    }
+  
+    .iconfont {
+      font-size: 28px;
+    }
+  
+    .van-grid-item__text {
+      color: #fff;
+      margin-top: 5px;
+    }
+  
+    .van-grid-item__content {
+      background: #121212;
+    }
+  
+    .van-grid-item[canbuy='false'] .van-grid-item__content {
+      background: #333;
+    }
+  
+    .price {
+      position: absolute;
+      top: 5px;
+      left: 5px;
     }
   }
+  
 </style>
