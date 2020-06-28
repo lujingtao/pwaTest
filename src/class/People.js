@@ -1,10 +1,10 @@
 //人类
 export default class People {
   constructor() {
-    this._equips={};
-    this._a={};
+    this._equips={}; //已装备的物品对象组合
+    this._a={}; //经过装备、状态统计后的能力，攻击力、命中率等
+    this._ap=6; //行动点数
     // this.$peos = null;
-    // this.moveRange = [];
     // this.attackRange = [];
     // this.state = "";
     // this.curPeo = null;
@@ -35,23 +35,6 @@ export default class People {
     this._a.hhb = -this.luck;
     this._a.mor = 100 + this.will;
   }
-  
-  // //放置人物
-  // putPeos() {
-  //   let html = "";
-  //   game.data.peos.forEach(peo => {
-  //     html += '<div class="peo" id="peo_' + peo.id + '" style="transform:translate3d(' + peo.x * game.map.unitSize +
-  //       'px, ' + peo.y * game.map.unitSize +
-  //       'px, 0px)">';
-  //     peo.equip.forEach(id => {
-  //       let good = game.data.goods.find(g => g.id == id);
-  //       html += '<span class="iconfont type-' + good.type + ' icon-' + good.type + '-' + good.cate +
-  //         '" style="color:'+ game.data.goodsColor[good.qua] +'; font-size:' + game.map.unitSize + 'px"></span>';
-  //     });
-  //     html += '</div>';
-  //   });
-  //   this.$peos.innerHTML = html;
-  // }
 
   // //初始化事件
   // initEvent() {
@@ -71,10 +54,10 @@ export default class People {
   //       game.people.curPeo = curPeo;
   //       targetPoint = { x: curPeo.x, y: curPeo.y };
 
-  //       startX = point.pageX - curPeo.x * game.map.unitSize;
-  //       startY = point.pageY - curPeo.y * game.map.unitSize;
+  //       startX = point.pageX - curPeo.x * map.unitSize;
+  //       startY = point.pageY - curPeo.y * map.unitSize;
 
-  //       game.people.creatMoveRange(curPeo, game.map.forbiddenPoint);
+  //       game.people.creatMoveRange(curPeo, map.banPoints);
   //       game.people.state = "moving";
   //       //$peo.addEventListener(game.touchMove, move, false);
   //       //$peo.addEventListener(game.touchEnd, end, false);
@@ -90,19 +73,19 @@ export default class People {
   //       //拖动界限
   //       endX = endX <= 0 ? 0 : endX;
   //       endY = endY <= 0 ? 0 : endY;
-  //       endX = endX >= (game.map.cols - 1) * game.map.unitSize ? (game.map.cols - 1) * game.map.unitSize : endX;
-  //       endY = endY >= (game.map.rows - 1) * game.map.unitSize ? (game.map.rows - 1) * game.map.unitSize : endY;
+  //       endX = endX >= (map.cols - 1) * map.unitSize ? (map.cols - 1) * map.unitSize : endX;
+  //       endY = endY >= (map.rows - 1) * map.unitSize ? (map.rows - 1) * map.unitSize : endY;
 
   //       $peo.style.transform = "translate3d(" + endX + "px," + endY + "px,0);"
   //       // $peo.setAttribute("style", "transform:translate3d(" + endX + "px, " + endY + "px, 0px);");
 
   //       //计算目标坐标
   //       targetPoint = {
-  //         x: parseInt(endX / game.map.unitSize + 1 / 2),
-  //         y: parseInt(endY / game.map.unitSize + 1 / 2)
+  //         x: parseInt(endX / map.unitSize + 1 / 2),
+  //         y: parseInt(endY / map.unitSize + 1 / 2)
   //       };
 
-  //       game.map.showTargetPoint(targetPoint);
+  //       map.showTargetPoint(targetPoint);
   //     }
 
   //     //触摸结束
@@ -133,65 +116,58 @@ export default class People {
   //   return document.getElementById("peo_" + id)
   // }
 
-  // //移动
-  // move(point) {
-  //   let $peo = this.getPeoEleById(this.curPeo.id);
-  //    $peo.style.transform = "translate3d(" + point.x * game.map.unitSize + "px," + point.y * game.map.unitSize +
-  //     "px,0);"
-  //   this.curPeo.x = point.x;
-  //   this.curPeo.y = point.y;
-    
-  //   game.people.state="";
-  //   game.people.moveRange=[];
-  //   game.map.updateForbiddenPoint();
-  //   game.map.draw([], "clear")
-  // }
+  //移动
+  moveTo(point) {
+    this.x = point[0];
+    this.y = point[1];
+  }
 
-  // //生成移动范围
-  // creatMoveRange(curPeo, forbiddenPoint) {
-  //   var cols = game.map.cols;
-  //   var rows = game.map.rows;
+  //生成移动范围
+  creatMoveRange(map) {
+    var cols = map.cols;
+    var rows = map.rows;
 
-  //   //获取周围四个点的值
-  //   var getRoundPoints = function(p, cols) {
-  //     var x = p[0],
-  //       y = p[1];
-  //     var r = [];
-  //     if (y - 1 >= 0) { r.push([x, y - 1]) }
-  //     if (x - 1 >= 0) { r.push([x - 1, y]) }
-  //     if (x + 1 < cols) { r.push([x + 1, y]) }
-  //     if (y + 1 < rows) { r.push([x, y + 1]) }
-  //     return r
-  //   }
-  //   //计算可移动范围
-  //   var moveRange = function(point, moveSize, forbiddenPoint) {
-  //     var openAry = [point];
-  //     //开始
-  //     var go = function(point, moveSize) {
-  //       var roundPoints = getRoundPoints(point, cols);
-  //       for (let i = 0; i < roundPoints.length; i++) {
-  //         var _moveSize = moveSize;
-  //         var p = roundPoints[i];
-  //         if (common.indexOf2Array(p, forbiddenPoint) == -1) {
-  //           _moveSize--;
-  //           if (common.indexOf2Array(p, openAry) == -1) {
-  //             openAry.push(p);
-  //           }
-  //           if (_moveSize > 0) {
-  //             go(p, _moveSize);
-  //           }
-  //         }
-  //       }
-  //     }
-  //     go(point, moveSize);
-  //     openAry.splice(openAry.indexOf(point), 1);
-  //     return openAry;
-  //   }
+    //获取周围四个点的值
+    var getRoundPoints = function(p, cols) {
+      var x = p[0],
+        y = p[1];
+      var r = [];
+      if (y - 1 >= 0) { r.push([x, y - 1]) }
+      if (x - 1 >= 0) { r.push([x - 1, y]) }
+      if (x + 1 < cols) { r.push([x + 1, y]) }
+      if (y + 1 < rows) { r.push([x, y + 1]) }
+      return r
+    }
+    //计算可移动范围
+    var moveRange = function(point, moveSize, banPoints) {
+      var openAry = [point];
+      //开始
+      var go = function(point, moveSize) {
+        var roundPoints = getRoundPoints(point, cols);
+        for (let i = 0; i < roundPoints.length; i++) {
+          var _moveSize = moveSize;
+          var p = roundPoints[i];
+          if (common.indexOf2Array(p, banPoints) == -1) {
+            _moveSize--;
+            if (common.indexOf2Array(p, openAry) == -1) {
+              openAry.push(p);
+            }
+            if (_moveSize > 0) {
+              go(p, _moveSize);
+            }
+          }
+        }
+      }
+      go(point, moveSize);
+      openAry.splice(openAry.indexOf(point), 1);
+      return openAry;
+    }
+    //let _banPoints = map.banPoints.filter();
+    let moveRange_ = moveRange([this.x, this.y], this.move, map.banPoints);
 
-  //   this.moveRange = moveRange([curPeo.x, curPeo.y], curPeo.move, forbiddenPoint);
-
-  //   game.map.draw(this.moveRange, "moveRange");
-  //   return this.moveRange;
-  // }
+    map.drawActionCell(moveRange_, "moveRange");
+    moveRange = null;
+    return moveRange_;
+  }
 
 }

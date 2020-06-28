@@ -1,21 +1,8 @@
 <template>
   <div components="Team" class="team">
     <section class="info" v-if="peo">
-      <div class="infoTop">
-        <span class="pull-right lv">LV<strong>{{peo.level}}</strong></span>
-        <span class="name">{{peo.name}}<i>[{{common.getTypeName("peos",peo.type)}}]</i></span>
-      </div>
-      <ul class="lines">
-        <li class="item">
-          生命：<span class="line hp"><i :style="{'width':hpPerc+'%'}"></i><b>{{peo.hp+"/"+peo.hpMax}}</b></span>
-        </li>
-        <li class="item">
-          头盔：<span class="line dur"><i :style="{'width':headPerc+'%'}"></i><b>{{headData}}</b></span>
-        </li>
-        <li class="item">
-          盔甲：<span class="line dur"><i :style="{'width':bodyPerc+'%'}"></i><b>{{bodyData}}</b></span>
-        </li>
-      </ul>
+      
+      <PeoStatus :peo="peo"></PeoStatus>
       <table class="attrTable">
         <tr>
           <td colspan="6"><strong>能力</strong></td>
@@ -144,46 +131,29 @@
 <script>
   import People from '@/class/People.js';
   import Peo from '@/components/Peo.vue';
+  import PeoStatus from './components/PeoStatus.vue';
   import SwitchEquip from './components/SwitchEquip.vue';
   export default {
-    components: { Peo, SwitchEquip },
+    components: { Peo, SwitchEquip,PeoStatus },
     data() {
       return {
         divs: 13, //多少格
         citys: [],
         peos: [],
         peo: null,
-        hpPerc:0,
-        headPerc:0,
-        headData:"0/0",
-        bodyPerc:0,
-        bodyData:"0/0",
         equipKey: '',
         showSwitchEquip: false,
       }
     },
-    watch: {
-      peo:{
-        handler(newValue, oldValue) {
-          this.hpPerc = Math.round(this.peo.hp / this.peo.hpMax * 100);
-          
-          this.headPerc = this.peo._equips.head ? Math.round(this.peo._equips.head.dur / this.peo._equips.head.durMax * 100) : 0;
-          
-          this.headData = this.peo._equips.head ? this.peo._equips.head.dur + "/" + this.peo._equips.head.durMax : "0/0";
-          
-          this.bodyPerc = this.peo._equips.body ? Math.round(this.peo._equips.body.dur / this.peo._equips.body.durMax * 100) : 0;
-          
-          this.bodyData = this.peo._equips.body ? this.peo._equips.body.dur + "/" + this.peo._equips.body.durMax : "0/0";
-          
-        },
-        deep: true
-      }
-    },
+
     created() {
-      console.log("读取存档1");
-      game.curSave = game.load(1);
-      console.log(game.curSave);
+      //console.log("读取存档1");
+      //game.curSave = game.load(1);
       this.peos = game.curSave.myTeam;
+      if(this.peos.length==0){
+        this.$toast.fail('请先招募队员');
+        return;
+      }
       this.peo = this.peos[0];
       this.click_peo(this.peo)
       console.log("当前人物：", this.peo);
@@ -229,74 +199,6 @@
       top: 38px;
       bottom: 150px;
       overflow-y: auto;
-
-      .infoTop {
-        padding: 10px 0;
-        text-align: left;
-        line-height: 22px;
-
-        .name {
-          font-size: 16px;
-
-          i {
-            font-size: 14px;
-            opacity: .5;
-            margin-left: 10px;
-            ;
-          }
-        }
-
-        .lv {
-          font-size: 12px;
-
-          strong {
-            font-size: 16px;
-          }
-        }
-      }
-
-      .lines {
-        position: relative;
-        text-align: left;
-        line-height: 12px;
-        margin-bottom: 20px;
-
-        .item {
-          position: relative;
-        }
-      }
-
-      .line {
-        text-align: center;
-        display: block;
-        position: absolute;
-        left: 40px;
-        right: 0;
-        top: 0;
-        background: #545454;
-        height: 12px;
-        border: 1px solid #dadada;
-
-        i {
-          position: absolute;
-          left: 0;
-          top: 0;
-          display: block;
-          height: 100%;
-          background: #15d400;
-        }
-
-        b {
-          font-weight: normal;
-          position: relative;
-        }
-      }
-
-      .dur {
-        i {
-          background: #acacac;
-        }
-      }
     }
 
     .equips {
@@ -363,7 +265,8 @@
       word-break: keep-all;
       white-space: nowrap;
 
-      li {
+      >ul>li {
+        position: relative;
         display: inline-block;
         width: 60px;
         height: 60px;

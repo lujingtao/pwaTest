@@ -8,7 +8,7 @@ export default class Map {
     this.rows = 0;
     this.ctx = null;
     this.dragY = true; //地图能否竖向拖拽
-    this.forbiddenPoint = [];
+    this.banPoints = []; //已被占领的坐标组
   }
   //初始化
   init(option) {
@@ -22,7 +22,10 @@ export default class Map {
     this.$map.height = this.unitSize * this.rows;
 
     this.createMap();
-    this.initEvent(this.$mapDrag);
+    if(this.$mapDrag){
+      this.initEvent(this.$mapDrag);
+    }
+    
     //this.updateForbiddenPoint();
   }
   //创建地图
@@ -86,9 +89,8 @@ export default class Map {
     let move = function(e) {
       let point = game.hasTouch ? e.touches[0] : e;
       e.preventDefault();
-      
       if(this_.dragY){
-        touchArea.style.transform = "translate3d(" + (point.pageX - startX) + "px," + (point.pageY - startY) + "px,0px);"
+        touchArea.style.transform = "translate3d(" + (point.pageX - startX) + "px," + (point.pageY - startY) + "px,0px)";
       }else{
         touchArea.style.transform = "translate3d(" + (point.pageX - startX) + "px,0px,0px)";
       }
@@ -105,28 +107,28 @@ export default class Map {
   }
 
   //移动目标位置高亮
-  showTargetPoint(point) {
-    for (let x = 0; x < this.cols; x++) {
-      for (let y = 0; y < this.rows; y++) {
-        if (x == point.x && y == point.y) {
-          this.ctx.fillStyle = "#f00";
-        } else {
-          this.ctx.fillStyle = "#444";
-        }
-        this.ctx.fillRect(this.unitSize * point.x + 1, this.unitSize * point.y + 1, this.unitSize - 1, this.unitSize -
-          1);
-      }
-    }
-  }
+  // showTargetPoint(point) {
+  //   for (let x = 0; x < this.cols; x++) {
+  //     for (let y = 0; y < this.rows; y++) {
+  //       if (x == point.x && y == point.y) {
+  //         this.ctx.fillStyle = "#f00";
+  //       } else {
+  //         this.ctx.fillStyle = "#444";
+  //       }
+  //       this.ctx.fillRect(this.unitSize * point.x + 1, this.unitSize * point.y + 1, this.unitSize - 1, this.unitSize -
+  //         1);
+  //     }
+  //   }
+  // }
   
-  //绘制地图
-  draw(ary, type) {
+  //绘制行动格子
+  drawActionCell(ary, type) {
     for (let x = 0; x < this.cols; x++) {
       for (let y = 0; y < this.rows; y++) {
         if (ary != undefined && common.indexOf2Array([x, y], ary) != -1) {
-          this.ctx.fillStyle = type == "attackRange" ? "#f00" : "#479c41";
+          this.ctx.fillStyle = type == "attackRange" ? "#f00" : "#008800";
         }else{
-          this.ctx.fillStyle = "#333";
+          this.ctx.fillStyle = "#000";
         }
         this.ctx.fillRect(this.unitSize * x + 5, this.unitSize * y + 5, this.unitSize - 10, this.unitSize -
           10);
@@ -134,12 +136,33 @@ export default class Map {
     }
   }
   
+  //清除行动格子
+  clearActionCell(){
+    for (let x = 0; x < this.cols; x++) {
+      for (let y = 0; y < this.rows; y++) {
+        this.ctx.clearRect(this.unitSize * x + 5, this.unitSize * y + 5, this.unitSize - 10, this.unitSize -
+          10);
+      }
+    }
+  }
+  
+  //清理地图
+  clearDraw(){
+    this.ctx.clearRect(0,0,c.width,c.height);  
+  }
+  
   //更新禁止坐标
-  updateForbiddenPoint(){
-    this.forbiddenPoint=[];
-    game.data.peos.forEach( peo=>{
-      this.forbiddenPoint.push([peo.x,peo.y])
-    })
+  updateBanPoints(myTeam,enemys,element){
+    this.banPoints=[];
+    myTeam.forEach( p=>{
+      this.banPoints.push([p.x,p.y])
+    });
+    enemys.forEach( p=>{
+      this.banPoints.push([p.x,p.y])
+    });
+    element.forEach( p=>{
+      this.banPoints.push([p.x,p.y])
+    });
   }
 
 }

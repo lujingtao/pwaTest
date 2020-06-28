@@ -1,13 +1,13 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home/Home.vue'
-import Battle from '../views/Battle.vue'
+import Battle from '../views/Battle/Battle.vue'
 import Team from '../views/Team/Team.vue'
-import option_Save from '../views/option/Save.vue'
-import option_Load from '../views/option/Load.vue'
-import option_Setting from '../views/option/Setting.vue'
-import city_market from '../views/city/Market.vue'
-import city_tavern from '../views/city/Tavern.vue'
+import Option_Save from '../views/Option/Save.vue'
+import Option_Load from '../views/Option/Load.vue'
+import Option_Setting from '../views/Option/Setting.vue'
+import City_market from '../views/City/Market.vue'
+import City_tavern from '../views/City/Tavern.vue'
 import Start from '../views/Start.vue'
 
 Vue.use(VueRouter)
@@ -15,7 +15,7 @@ Vue.use(VueRouter)
 const routes = [{
     path: '/',
     meta: { title: '开始' },
-    component: Home
+    component: Start
   },
   {
     path: '/Home',
@@ -33,29 +33,29 @@ const routes = [{
     component: Battle
   },
   {
-    path: '/option/Save',
+    path: '/Option/Save',
     meta: { title: '存档' },
-    component: option_Save
+    component: Option_Save
   },
   {
-    path: '/option/Load',
+    path: '/Option/Load',
     meta: { title: '读档' },
-    component: option_Load
+    component: Option_Load
   },
   {
-    path: '/option/Setting',
+    path: '/Option/Setting',
     meta: { title: '设置' },
-    component: option_Setting
+    component: Option_Setting
   },
   {
-    path: '/city/market',
+    path: '/City/market',
     meta: { title: '市集' },
-    component: city_market
+    component: City_market
   },
   {
-    path: '/city/tavern',
+    path: '/City/tavern',
     meta: { title: '酒馆' },
-    component: city_tavern
+    component: City_tavern
   },
 ]
 

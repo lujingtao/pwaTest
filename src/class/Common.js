@@ -5,6 +5,7 @@
     random: function(min, max) {
       return Math.round((Math.random() * (max - min)) + min);
     },
+    
     //返回所在二维数字内的位置
     indexOf2Array: function(arry, towArrys) {
       for (let i = 0; i < towArrys.length; i++) {
@@ -14,74 +15,24 @@
       }
       return -1;
     },
-    //新建tap事件
-    tap: function(callBack, ev, time) {
-      ev.stopPropagation();
-      var isMove = false;
-      var $target = $(ev.target);
-      var startPoint = {};
-      var nowPoint = {};
-      time = time == undefined ? 200 : time;
-      $target.addClass("touchOn");
-      startPoint = {
-        x: ev.originalEvent.targetTouches[0].pageX,
-        y: ev.originalEvent.targetTouches[0].pageY
-      };
-      $target.on("touchmove", function() {
-        isMove = true;
-      });
-      $target.on("touchend", function(evEnd) {
-        evEnd.stopPropagation();
-        $target.removeClass("touchOn");
-        $target.off("touchend");
-        $target.off("touchmove");
-        nowPoint = {
-          x: evEnd.originalEvent.changedTouches[0].pageX,
-          y: evEnd.originalEvent.changedTouches[0].pageY
-        };
-        //if(isMove) return;
-        if (Math.abs(nowPoint.x - startPoint.x) < 5 && Math.abs(nowPoint.y - startPoint.y) < 5) {
-          setTimeout(function() {
-            callBack(ev)
-          }, time);
-        }
-      });
-    },
-
 
     /**
      * 生成不重叠坐标
-     * min,max 坐标范围
+     * xMax, yMax 坐标范围，x轴最大值，y轴最大值
      * ary 已有坐标数组
      * */
-    creatPoint: function(min, max, ary) {
-      if(ary.length>=Math.pow(max+1,2)){
+    creatPoint: function(xMax, yMax, ary) {
+      if(ary.length>=(xMax+1)*(yMax+1)){
         console.error("坐标已填满数组,计算超出范围!");
         return null
       }
-      var p = [common.random(min, max), common.random(min, max)];
+      var p = [common.random(0, xMax), common.random(0, yMax)];
       if (common.indexOf2Array(p, ary) != -1) {
-        p = common.creatPoint(min, max, ary);
+        p = common.creatPoint(xMax, yMax, ary);
       }
       return p;
     },
-    //去掉所有的html标记
-    removeHtmlTag: function(str) {
-      return str.replace(/<[^>]+>/g, "");
-    },
-    //格式化游戏时间
-    formatDate: function(date) {
-      var d = parseInt(date / 24);
-      var h = date % 24;
-      return d + "天" + h + "时";
-    },
-    //格式化时间(秒)
-    formatTime: function(time) {
-      var m = parseInt(time / 60);
-      var s = time % 60;
-      return m + "分" + s + "秒";
-    },
-
+    
     //随机生成人名
     createRandomName: function() {
       var familyNames = new Array(
@@ -114,6 +65,7 @@
       var givenName = givenNames[j];
       return familyName + givenName;
     },
+    
     //生成不重复id
     createUniqueId: function() {
       return Number(Math.random().toString().substr(3, 5) + Date.now()).toString(36)
@@ -121,33 +73,26 @@
 
     //返回点击坐标
     getPoint: function(event) {
-      var point = {};
+      var point = [];
       if (event.clientX != undefined) {
-        point.x = event.clientX;
-        point.y = event.clientY;
+        point[0] = event.clientX;
+        point[1] = event.clientY;
       } else {
-        point.x = event.targetTouches[0].pageX;
-        point.y = event.targetTouches[0].pageY;
+        point[0] = event.targetTouches[0].pageX;
+        point[1] = event.targetTouches[0].pageY;
       }
       return point;
     },
-    //返回指定地图所在的坐标
+    
+    //返回指定地图所在的坐标，obj为地图外层，且其父层不能有position
     getMapPoint: function(event, unitSize, obj) {
       var point = common.getPoint(event);
-      point.x = parseInt((point.x - obj.offsetLeft) / unitSize);
-      point.y = parseInt((point.y - obj.offsetTop) / unitSize);
+      point[0] = parseInt((point[0] - obj.offsetLeft) / unitSize);
+      point[1] = parseInt((point[1] - obj.offsetTop) / unitSize);
       return point;
     },
-    //检测碰撞, a碰撞b , 误差n
-    checkImpact: function(a, b, n) {
-      n = n == undefined ? 0 : n;
-      if (a.x - n >= b.x - a.width && a.x + n <= b.x + b.width && a.y - n >= b.y - a.height && a.y + n <= b.y + b
-        .height) {
-        return true;
-      } else {
-        return false;
-      }
-    },
+
+    
     //获取符合正太分布随机值
     getNumberInNormalDistribution: function(mean, std_dev) {
       var u = 0.0,
@@ -208,6 +153,51 @@
       return game.curSave[list].find( item=>item.id==goodsId );
     },
     
+    
+    // //检测碰撞, a碰撞b , 误差n
+    // checkImpact: function(a, b, n) {
+    //   n = n == undefined ? 0 : n;
+    //   if (a.x - n >= b.x - a.width && a.x + n <= b.x + b.width && a.y - n >= b.y - a.height && a.y + n <= b.y + b
+    //     .height) {
+    //     return true;
+    //   } else {
+    //     return false;
+    //   }
+    // },
+    
+    // //新建tap事件
+    // tap: function(callBack, ev, time) {
+    //   ev.stopPropagation();
+    //   var isMove = false;
+    //   var $target = $(ev.target);
+    //   var startPoint = {};
+    //   var nowPoint = {};
+    //   time = time == undefined ? 200 : time;
+    //   $target.addClass("touchOn");
+    //   startPoint = {
+    //     x: ev.originalEvent.targetTouches[0].pageX,
+    //     y: ev.originalEvent.targetTouches[0].pageY
+    //   };
+    //   $target.on("touchmove", function() {
+    //     isMove = true;
+    //   });
+    //   $target.on("touchend", function(evEnd) {
+    //     evEnd.stopPropagation();
+    //     $target.removeClass("touchOn");
+    //     $target.off("touchend");
+    //     $target.off("touchmove");
+    //     nowPoint = {
+    //       x: evEnd.originalEvent.changedTouches[0].pageX,
+    //       y: evEnd.originalEvent.changedTouches[0].pageY
+    //     };
+    //     //if(isMove) return;
+    //     if (Math.abs(nowPoint.x - startPoint.x) < 5 && Math.abs(nowPoint.y - startPoint.y) < 5) {
+    //       setTimeout(function() {
+    //         callBack(ev)
+    //       }, time);
+    //     }
+    //   });
+    // },
     
   }
 })();

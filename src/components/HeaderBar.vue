@@ -20,7 +20,6 @@
       }
     },
     mounted() {
-      this.$store.commit("updateStore");
     },
     methods: {
       

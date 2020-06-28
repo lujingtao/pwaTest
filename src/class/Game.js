@@ -73,8 +73,8 @@ export default class Game {
     if(data){
       return JSON.parse(LZString.decompressFromBase64(data));
     }else{
-      console.error("读取存档失败，找不到id为"+savefileId+"的存档。");
-      return []
+      console.warn("读取存档失败，找不到id为"+savefileId+"的存档。");
+      return undefined
     }
     
   };

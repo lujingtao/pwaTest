@@ -12,7 +12,15 @@
       }
     },
     created() {
-
+      //调试时使用，默认读取第一个存档
+      if(!game.curSave){
+        game.curSave = game.load(1);
+        if(!game.curSave&&this.$route.path!="/"){
+          this.$router.push("/");
+          return;
+        };
+        this.$store.commit("updateStore");
+      }
     },
     mounted() {
 
@@ -127,16 +135,16 @@ html,body,#app{
 }
 
 //地图相关
-#mapWrap {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-#mapDrag{
-  position: absolute;
-  left: 0;
-  top: 0;
-}
+// #mapWrap {
+//   width: 100%;
+//   height: 100%;
+//   position: relative;
+// }
+// #mapDrag{
+//   position: absolute;
+//   left: 0;
+//   top: 0;
+// }
 
 //覆盖默认样色
 .van-tabbar{
@@ -151,6 +159,9 @@ html,body,#app{
 }
 .van-tag{
   margin:0 2px;
+}
+.van-button--default{
+  border-color: #666;
 }
 
 .van-panel,
@@ -176,5 +187,10 @@ html,body,#app{
 .van-action-sheet__cancel:active, .van-action-sheet__item:active{
   background: #000000;
 }
-
+.van-popup--bottom .van-hairline--top::after{
+  border:0;
+}
+.van-action-sheet__item{
+  border-bottom: 1px solid #666;
+}
 </style>

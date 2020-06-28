@@ -11,6 +11,7 @@ export default new Vuex.Store({
     repair: 0,
     medication: 0,
     arrow: 0,
+    curNode:null,
   },
   mutations: {
     updateStore(state, val) {
@@ -21,6 +22,7 @@ export default new Vuex.Store({
       state.repair = game.curSave.repair;
       state.medication = game.curSave.medication;
       state.arrow = game.curSave.arrow;
+      state.curNode = game.curSave.curNode;
     },
   },
   actions: {},

@@ -3,6 +3,9 @@
     <li v-for="item in nodes" :key="item.id" :class="item.type" :id="'node-'+item.id">
       <a :class="'status-'+item.status" @touchend.prevent="click_node(item)">
         <i :class="'iconfont icon-'+['camp','battle','event'][item.type]"></i>
+        <span class="size">
+          <van-icon v-for="n in item.size" name="star" />
+        </span>
       </a>
       <Tree v-if="item.children && item.children.length>0" :nodes="item.children" :fullNodes="fullNodes"></Tree>
     </li>
@@ -12,25 +15,33 @@
 <script>
   export default {
     name: "Tree",
-    props: ['nodes','fullNodes'],
+    props: ['nodes', 'fullNodes'],
     data() {
-      return {
-      }
+      return {}
     },
     methods: {
       //点击节点
       click_node(item) {
-
-        switch (item.status) {
-          case 2:
-            break;
-          case 1:
-            this.showDialog(item,()=>{
+        if(game.curSave.curNode == item) return;
+        switch (item.type) {
+          case 2: //事件
+            this.showDialog(item, () => {
               this.updateCurNode(item);
+              this.createNodes(item);
             });
             break;
-          default:
-            this.showDialog(item,()=>{
+          case 1: //战场
+            this.showDialog(item, () => {
+              if (game.curSave.myTeam.length == 0) {
+                this.$toast.fail('请先招募队员');
+                return;
+              }
+              this.$router.push("/battle")
+              //this.updateCurNode(item);
+            });
+            break;
+          default: //营地
+            this.showDialog(item, () => {
               this.updateCurNode(item);
               this.createNodes(item);
             });
@@ -40,65 +51,71 @@
 
       //弹窗
       showDialog(item, callBack) {
-          this.$dialog.confirm({
-              title: '移动到' + item.id,
-              message: ['营地', '战场', '事件'][item.type] + "，" + ['未探索', '已探索', '当前'][item.status],
-            })
-            .then(() => {
-              if(callBack){
-                callBack();
-              }
-            })
-            .catch(() => {});
-        },
-        
-        //更新当前节点
-        updateCurNode(item){
-          let curNode = this.getCurNode(this.fullNodes);
-          curNode.status = 1;
-          item.status = 2;
-        },
-        
-        //获取当前节点
-        getCurNode(ary){
-          for (var i = 0; i < ary.length; i++) {
-            let item = ary[i];
-            if(item.status==2) return item;
-            if(item.children){
-              let res = this.getCurNode(item.children);
-              if(res) return res;
+        this.$dialog.confirm({
+            title: '移动到' + item.id,
+            message: ['营地', '战场', '事件'][item.type] + " [" + ['未探索', '已探索', '当前'][item.status]+"]，规模 ["+item.size+"]",
+          })
+          .then(() => {
+            if (callBack) {
+              callBack();
             }
-          }
-        },
+          })
+          .catch(() => {});
+      },
 
-        //创建地图节点
-        createNodes(parent, count) {
-          count = count == undefined ? common.random(1, 3) : count;
-          this.$set(parent, "children", [])
-          //parent.children = [];
-          for (var i = 0; i < count; i++) {
-            let type = common.getNumberInAppoint([
-              [0, 0.1],
-              [1, 0.7],
-              [2, 0.2]
-            ]);
-            parent.children.push(
-              this.createNode(type, 0, parent.depth + 1, parent.index, i)
-            )
-          }
-        },
+      //更新当前节点
+      updateCurNode(item) {
+        let curNode = this.getCurNode(this.fullNodes);
+        curNode.status = 1;
+        item.status = 2;
+        game.curSave.curNode = item;
+        this.$store.commit("updateStore");
+      },
 
-        createNode(type, status, depth, parentIndex, index) {
-          return {
-            id: depth + "-" + parentIndex + "-" + index,
-            depth: depth,
-            index: index,
-            type: type, //0:营地， 1:战场  2:事件
-            status: status, //0:未探索， 1:已探索  2:当前
+      //获取当前节点
+      getCurNode(ary) {
+        for (var i = 0; i < ary.length; i++) {
+          let item = ary[i];
+          if (item.status == 2) return item;
+          if (item.children) {
+            let res = this.getCurNode(item.children);
+            if (res) return res;
           }
+        }
+      },
+
+      //创建多个地图节点
+      createNodes(parent, count) {
+        count = count == undefined ? common.random(1, 3) : count;
+        //parent.chilren = [];
+        //this.$set(parent, "children", [])
+        //parent.children = [];
+        for (var i = 0; i < count; i++) {
+          let type = common.getNumberInAppoint([
+            [0, 0.1],
+            [1, 0.7],
+            [2, 0.2]
+          ]);
+          parent.children.push(
+            this.createNode(type, 0, parent.depth + 1, parent.index, i)
+          )
+        }
+      },
+
+      //创建单个地图节点
+      createNode(type, status, depth, parentIndex, index) {
+        return {
+          id: depth + "-" + parentIndex + "-" + index,
+          depth: depth,
+          index: index,
+          type: type, //0:营地， 1:战场  2:事件
+          status: status, //0:未探索， 1:已探索  2:当前
+          size:common.getNumberInAppoint([[1,0.1],[2,0.2],[3,0.4],[4,0.2],[5,0.1]]), //规模
+          children: []
         }
       }
     }
+  }
 </script>
 
 <style>
@@ -200,6 +217,7 @@
     font-family: arial, verdana, tahoma;
     font-size: 11px;
     display: inline-block;
+    position: relative;
 
     border-radius: 5px;
     -webkit-border-radius: 5px;
@@ -218,5 +236,15 @@
 
   .tree li a.status-2 {
     color: #55A532;
+  }
+  
+  .tree li .size{
+    position: absolute;
+    text-align: center;
+    bottom:-8px;
+    left:-10px;
+    right: -10px;
+    transform: scale(0.6);
+    
   }
 </style>
