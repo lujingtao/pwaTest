@@ -159,9 +159,13 @@
         if (size == 5) { types = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
           count = common.random(myTeamCount + 2, myTeamCount + 4) }
 
+        //调试模式，只有一个敌人
+        count = 1;
+
         for (var i = 0; i < count; i++) {
           let type = types[common.random(0, types.length-1)];
           let peo = createPeo(type);
+          peo.move=1; //调试模式，移动力只有1
           peo.__proto__ = new People;
           this.createEnemyEquips(peo);
           peo.updateAbility();
