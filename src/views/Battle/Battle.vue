@@ -64,7 +64,8 @@
   import BottomBtns from './components/BottomBtns.vue';
   import PeoStatus from '@/views/Team/components/PeoStatus.vue';
   import Map from "@/class/Map.js";
-  import { createPeo, createGood, o2o } from "@/class/Tool.js";
+  import { createPeo, createGood, o2o, getPeoSkills } from "@/class/Tool.js";
+  import AI from './code/AI.js';
   export default {
     components: { Peo, PeoStatus,BottomBtns },
     data() {
@@ -91,15 +92,22 @@
     mounted() {
       this.$map = document.getElementById("map");
       this.initMap();
-      //game.people.putPeos();
-      //game.people.initEvent();
+      
+      this.AI = new AI({
+        enemys:this.enemys,
+        peos:this.peos,
+        elements:this.elements,
+        map:this.map,
+      });
+      
+      this.nextRound();
     },
     methods: {
       //点击人员
       click_peo(peo) {
         this.curPeo = peo;
         this.moveRange = peo.creatMoveRange(this.map);
-        this.skills = this.getPeoSkills(peo);
+        this.skills = getPeoSkills(peo);
         console.log("获取人员技能：",this.skills);
         this.curSkill = this.skills[0];
       },
@@ -109,19 +117,21 @@
         this.curSkill = skill;
       },
 
-      //获取人员全部主动技能
-      getPeoSkills(peo){
-        let leftHandSkills = peo._equips.leftHand?peo._equips.leftHand.skill:[];
-        let rightHandSkills = peo._equips.rightHand?peo._equips.rightHand.skill:[];
-        let skills = [];
-        let skillsIdAry = leftHandSkills.concat(rightHandSkills);
-        skillsIdAry.forEach(id=>{
-          let skill = {};
-          let o = data.skills.find(item=>item.id==id && item.class==1);
-          o2o(o,skill);
-          skills.push(skill)
-        });
-        return skills;
+      //地图点击事件
+      touchMap(e) {
+        let point = common.getMapPoint(e, this.unitSize, document.getElementById("mapWrap"));
+        console.log(point);
+        //如果是人员移动范围则移动，否则取消人员选择
+        if (common.indexOf2Array(point, this.moveRange) != -1) {
+          this.curPeo.moveTo(point);
+          this.map.updateBanPoints(this.peos, this.enemys, this.elements);
+        }else{
+          this.curPeo = null;
+          this.curSkill = null;
+          this.skills = [];
+        }
+        this.map.clearActionCell();
+        this.moveRange = [];
       },
 
       //初始化我方
@@ -244,30 +254,16 @@
         option.cols = Math.round((this.mapSize.xMax+1) * 1);
         option.rows = Math.round((this.mapSize.yMax+1) * 1);
         this.map.init(option);
-
         this.$map.addEventListener(game.touchStart, this.touchMap)
       },
-
-      //地图点击事件
-      touchMap(e) {
-        let point = common.getMapPoint(e, this.unitSize, document.getElementById("mapWrap"));
-        //如果是人员移动范围则移动，否则取消人员选择
-        if (common.indexOf2Array(point, this.moveRange) != -1) {
-          this.curPeo.moveTo(point);
-          this.map.updateBanPoints(this.peos, this.enemys, this.elements);
-        }else{
-          this.curPeo = null;
-          this.curSkill = null;
-          this.skills = [];
-        }
-        this.map.clearActionCell();
-        this.moveRange = [];
-      },
-      
+        
       //下一回合
       nextRound(){
         console.log("下一回合");
         this.round ++;
+        if(this.round%2==0){
+          this.AI.start();
+        }
       },
       
       //点击取消按钮

@@ -28,8 +28,8 @@ const routes = [{
     component: Team
   },
   {
-    path: '/battle',
-    meta: { title: '战场' },
+    path: '/Battle',
+    meta: { title: 'Battle' },
     component: Battle
   },
   {

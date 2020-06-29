@@ -6,7 +6,10 @@ module.exports = {
     // 修复HMR
     config.resolve.symlinks(true);
   },
-  
+  configureWebpack: config => {
+    //调试JS
+    config.devtool = "source-map";
+  },
   css: {
     sourceMap: true // 开启 CSS source maps?
   }

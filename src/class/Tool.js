@@ -73,7 +73,7 @@ export function o2o(source, target) {
           target[k] = val.split(",");
         }
       } else if (val.indexOf("{") != -1) {
-        val = val.replace(/'/g,"\"");
+        val = val.replace(/'/g, "\"");
         //对象
         target[k] = JSON.parse(val);
       } else {
@@ -86,4 +86,21 @@ export function o2o(source, target) {
     }
 
   }
+}
+
+//获取人员全部技能（默认增加移动技能和结束技能）
+export function getPeoSkills(peo) {
+  let leftHandSkills = peo._equips.leftHand ? peo._equips.leftHand.skill : [];
+  let rightHandSkills = peo._equips.rightHand ? peo._equips.rightHand.skill : [];
+  let skills = [];
+  let skillsIdAry = leftHandSkills.concat(rightHandSkills);
+  skillsIdAry.unshift("-1");
+  skillsIdAry.push("-2");
+  skillsIdAry.forEach(id => {
+    let skill = {};
+    let o = data.skills.find(item => item.id == id);
+    o2o(o, skill);
+    skills.push(skill)
+  });
+  return skills;
 }

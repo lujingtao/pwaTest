@@ -1,38 +1,39 @@
 //人类
 export default class People {
   constructor() {
-    this._equips={}; //已装备的物品对象组合
-    this._a={}; //经过装备、状态统计后的能力，攻击力、命中率等
-    this._ap=6; //行动点数
+    this._equips = {}; //已装备的物品对象组合
+    this._a = {}; //经过装备、状态统计后的能力，攻击力、命中率等
+    this._ap = 6; //行动点数
+    this._status = "waiting"; //当前人员状态
     // this.$peos = null;
     // this.attackRange = [];
     // this.state = "";
     // this.curPeo = null;
   }
-  
+
   //更新属性
-  update(){
+  update() {
     this.updatePeoEquips();
     this.updateAbility();
   }
-  
+
   //使用peoEquips存储装备对象
   updatePeoEquips() {
     for (let key in this.equip) {
       this._equips[key] = common.getGoods(this.equip[key], "myGoods");
     }
   }
-    
+
   //更新能力值
   updateAbility() {
     let lh = this._equips.leftHand;
-    this._a.atk = this.pow + (lh?lh.atk:0);
-    this._a.hit = 100 + this.agi + (lh?lh.hit:0);
+    this._a.atk = this.pow + (lh ? lh.atk : 0);
+    this._a.hit = 100 + this.agi + (lh ? lh.hit : 0);
     this._a.dod = this.agi;
     this._a.atkb = this.skill;
-    this._a.fatkb = Math.round(this.skill/2);
-    this._a.hh = this.luck + (lh?lh?.hh:0);
-    this._a.hhb = -this.luck;
+    this._a.fatkb = Math.round(this.skill / 2);
+    this._a.hh = this.luck + (lh ? lh.hh : 0); //爆头率
+    this._a.hhb = -this.luck; //被爆头率
     this._a.mor = 100 + this.will;
   }
 
@@ -122,51 +123,47 @@ export default class People {
     this.y = point[1];
   }
 
-  //生成移动范围
-  creatMoveRange(map) {
-    var cols = map.cols;
-    var rows = map.rows;
+  //获取周围四个点的值
+  getRoundPoints(p, map) {
+    var x = p[0],
+      y = p[1];
+    var r = [];
+    if (y - 1 >= 0) { r.push([x, y - 1]) }
+    if (x - 1 >= 0) { r.push([x - 1, y]) }
+    if (x + 1 < map.cols) { r.push([x + 1, y]) }
+    if (y + 1 < map.rows) { r.push([x, y + 1]) }
+    return r
+  }
 
-    //获取周围四个点的值
-    var getRoundPoints = function(p, cols) {
-      var x = p[0],
-        y = p[1];
-      var r = [];
-      if (y - 1 >= 0) { r.push([x, y - 1]) }
-      if (x - 1 >= 0) { r.push([x - 1, y]) }
-      if (x + 1 < cols) { r.push([x + 1, y]) }
-      if (y + 1 < rows) { r.push([x, y + 1]) }
-      return r
-    }
-    //计算可移动范围
-    var moveRange = function(point, moveSize, banPoints) {
-      var openAry = [point];
-      //开始
-      var go = function(point, moveSize) {
-        var roundPoints = getRoundPoints(point, cols);
-        for (let i = 0; i < roundPoints.length; i++) {
-          var _moveSize = moveSize;
-          var p = roundPoints[i];
-          if (common.indexOf2Array(p, banPoints) == -1) {
-            _moveSize--;
-            if (common.indexOf2Array(p, openAry) == -1) {
-              openAry.push(p);
-            }
-            if (_moveSize > 0) {
-              go(p, _moveSize);
-            }
+  //获取可移动范围
+  getMoveRange(map) {
+    let _this = this;
+    var openAry = [];
+    //开始
+    var go = function(point, moveSize) {
+      var roundPoints = _this.getRoundPoints(point, map);
+      for (let i = 0; i < roundPoints.length; i++) {
+        var _moveSize = moveSize;
+        var p = roundPoints[i];
+        if (common.indexOf2Array(p, map.banPoints) == -1) {
+          _moveSize--;
+          if (common.indexOf2Array(p, openAry) == -1) {
+            openAry.push(p);
+          }
+          if (_moveSize > 0) {
+            go(p, _moveSize);
           }
         }
       }
-      go(point, moveSize);
-      openAry.splice(openAry.indexOf(point), 1);
-      return openAry;
     }
-    //let _banPoints = map.banPoints.filter();
-    let moveRange_ = moveRange([this.x, this.y], this.move, map.banPoints);
+    go([this.x, this.y], this.move);
+    return openAry;
+  }
 
+  //生成移动范围
+  creatMoveRange(map) {
+    let moveRange_ = this.getMoveRange(map);
     map.drawActionCell(moveRange_, "moveRange");
-    moveRange = null;
     return moveRange_;
   }
 
