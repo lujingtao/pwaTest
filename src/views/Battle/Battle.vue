@@ -100,7 +100,7 @@
         map:this.map,
       });
       
-      this.nextRound();
+      //this.nextRound();
     },
     methods: {
       //点击人员
