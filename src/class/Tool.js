@@ -66,12 +66,13 @@ export function o2o(source, target) {
         target[k] = common.random(Number(ary[0]), Number(ary[1]))
       } else if (val.indexOf("[") != -1) {
         //数组
-        val = val.replace("[", "").replace("]", "");
-        if (val == "") {
-          target[k] = [];
-        } else {
-          target[k] = val.split(",");
-        }
+         target[k] = eval(val);
+        // val = val.replace("[", "").replace("]", "");
+        // if (val == "") {
+        //   target[k] = [];
+        // } else {
+        //   target[k] = val.split(",");
+        // }
       } else if (val.indexOf("{") != -1) {
         val = val.replace(/'/g, "\"");
         //对象
