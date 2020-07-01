@@ -66,7 +66,7 @@ export function o2o(source, target) {
         target[k] = common.random(Number(ary[0]), Number(ary[1]))
       } else if (val.indexOf("[") != -1) {
         //数组
-         target[k] = eval(val);
+        target[k] = eval(val);
         // val = val.replace("[", "").replace("]", "");
         // if (val == "") {
         //   target[k] = [];
@@ -104,4 +104,19 @@ export function getPeoSkills(peo) {
     skills.push(skill)
   });
   return skills;
+}
+
+//获取攻击结果值
+export function getAtkResult(cur, unit, skill) {
+  console.log(unit);
+  let result = {
+    bh:0, //破马伤害
+    ba:0, //破甲伤害
+    pa:0, //穿甲伤害
+    bs:0, //破盾伤害
+  }
+  //console.log("当前人员能力，目标能力", cur._a, unit._a);
+  //damge = cur._a.atk * cur_a.pa / 100
+  
+  return result;
 }

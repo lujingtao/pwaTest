@@ -1,5 +1,5 @@
 //AI
-import { getPeoSkills, o2o, getAtkResult } from "@/class/Tool.js";
+import { getPeoSkills, o2o } from "@/class/Tool.js";
 export default class AI {
   constructor(option) {
     this.enemys = option.enemys; //敌方
@@ -21,22 +21,31 @@ export default class AI {
       this.skills = getPeoSkills(cur);
       console.log("获取所有技能", this.skills);
       this.skills.forEach(skill => {
-        this.createLeaf(cur, skill);
+        console.warn(skill.type + "技能行动队列Start");
+        this.getLeaf(cur, skill);
+        console.warn(skill.type + "技能行动队列End");
       });
-      this.tree.sort( (a,b)=> b.score - a.score);
       console.log("AI生成决策树", this.tree);
     })
-    console.timeEnd('AI生成决策树耗时');
+    console.timeEnd('AI生成决策树耗时')
   }
 
   //获取单次决策队列
-  createLeaf(cur, skill) {
-    if (cur._ap < skill.ap) return;
-    let leaf = {  };
-    console.log("【", skill.type, "】当前ap，技能ap", cur._ap, skill.ap, );
+  getLeaf(cur, skill) {
+    let leaf = { actions: [], score: 0 };
+    let ap = cur._ap;
+    this.getActions(cur, ap, skill, leaf);
+  }
+
+  getActions(cur, ap, skill, leaf) {
+
+    if (ap < skill.ap) return;
+    console.log("【", skill.type, "】当前ap，技能ap", ap, skill.ap, );
+    ap = ap - skill.ap;
 
     //如果是移动技能
     if (skill.id == -1) {
+      return;
       let move = skill.move;
       let moveRange = cur.getMoveRange(this.map);
 
@@ -44,11 +53,19 @@ export default class AI {
       let nearestEnemy = this.getNearestEnemy(cur);
       let nearestDis = this.getDistance([cur.x, cur.y], [nearestEnemy.x, nearestEnemy.y]);
       console.log("获取最近敌人", nearestEnemy, [nearestEnemy.x, nearestEnemy.y]);
-      for (let p of moveRange) {
-        let score = this.getMoveScore(cur, p, nearestEnemy, nearestDis);
-        leaf = this.createAction(skill, p, score);
-        this.tree.push(leaf);
-        console.warn("创建一个新叶子：", leaf);
+      for (let m of moveRange) {
+        let score = this.getMoveScore(cur, m, nearestEnemy, nearestDis);
+        let action = this.createAction(skill.id, m, score);
+        let _leaf = JSON.parse(JSON.stringify(leaf));
+        _leaf.actions.push(action);
+        cur.x = m[0];
+        cur.y = m[1];
+        this.map.updateBanPoints(this.peos, this.enemys, this.elements);
+        console.log("并添加操作", action, m);
+        console.log("当前人物坐标：", [cur.x, cur.y]);
+        for (let s of this.skills) {
+          this.getActions(cur, ap, s, _leaf);
+        };
       }
     } else if (skill.id != -2) {
       //其它技能
@@ -63,80 +80,23 @@ export default class AI {
         console.log("技能执行范围：", triggerRange);
         let units = this.getTriggerRangeUnits(triggerRange, skill);
         console.log("技能执行范围内能实施的单位数组：", units);
-        if (units.length == 0) return;
-        let score = this.getActionScore(cur, p, units, skill);
-        leaf = this.createAction(skill, p, score);
-        this.tree.push(leaf);
-        console.warn("创建一个新叶子：", leaf);
+        
       })
+
+      // let _leaf = JSON.parse(JSON.stringify(leaf));
+      // _leaf.actions.push(this.createAction(0, [cur.x, cur.y], 0));
     } else {
       //结束技能
-      leaf = this.createAction(skill, [cur.x, cur.y], 0);
-      this.tree.push(leaf);
-      console.warn("创建一个新叶子：", leaf);
+      let _leaf = JSON.parse(JSON.stringify(leaf));
+      _leaf.actions.push(this.createAction(skill.id, [cur.x, cur.y], 0));
+      //计算单个叶子总分
+      _leaf.actions.forEach(item => {
+        _leaf.score += item.score;
+      })
+      this.tree.push(_leaf);
+      console.warn("创建一个新叶子：", _leaf);
     }
   }
-
-  //获取操作得分
-  getActionScore(cur, p, units, skill) {
-    let score = 0;
-    //ai行为结算类型account 0：独立计算 1：伤害计算
-    if (skill.account == 1) {
-      units.forEach(unit => {
-        let damge = this.getEstimateOneDamage(cur, unit, skill);
-        score += unit.hp - damge <=0?100:damge;
-      });
-      
-    } else {
-      switch (skill.id) {
-        case 17: //架盾
-          score = 10;
-          break;
-        default:
-          break;
-      }
-    }
-    return score;
-  }
-
-  //预估单个害值
-  getEstimateOneDamage(cur, unit, skill) {
-    let damge = 0;
-    //没有武器装备，伤害为1
-    if (!cur._equips.leftHand) {
-      damge = 1;
-    } else {
-      let atk = cur._a.atk;
-      //目标没有传盔甲则穿甲率为1，否则为武器穿甲率
-      let pa = unit._equips.body ? cur._equips.leftHand.pa / 100 : 1;
-      //技能对伤害的加成
-      pa = skill.effect.pa ? pa + skill.effect.pa : pa;
-      pa = pa > 1 ? 1 : pa;
-      atk = skill.effect.atk ? pa + skill.effect.atk : atk;
-      
-      damge = Math.round(atk * pa);
-    }
-    console.log("预期单个伤害：",damge);
-    return damge;
-  }
-
-  //获取单次移动分数
-  getMoveScore(cur, m, nearestEnemy, nearestDis) {
-    let score = 0;
-    //则获取最近敌人及最短距离，目标点离最近敌人的距离越短，得分越大（最大为移动点数）
-    let mDis = this.getDistance(m, [nearestEnemy.x, nearestEnemy.y]);
-    console.log("最近敌人距离，移动目标坐标", m, "和最近敌人距离", nearestDis, mDis);
-    score = nearestDis - mDis;
-
-    //判断身旁有多少敌人，每有一个敌人则：-基础分*命中概率50% =  -50 * 50% = -25;
-    let roundEnemys = this.getRoundEnemys(cur);
-    //console.log("周围敌人：", roundEnemys);
-    if (roundEnemys.length > 0) {
-      score += roundEnemys.length * -25
-    }
-    return score;
-  }
-
 
   //获取技能执行范围内，技能类型及单位类型符合的单位数组
   getTriggerRangeUnits(range, skill) {
@@ -146,7 +106,7 @@ export default class AI {
       if (!unit) return;
       if ((unit.type == "peos" && skill.class == 1) ||
         unit.type == "enemys" && skill.class == 0) {
-        ary.push(unit.unit)
+        ary.push(unit)
       }
     })
     return ary;
@@ -177,6 +137,23 @@ export default class AI {
       }
     })
     return ary
+  }
+
+  //获取单次移动分数
+  getMoveScore(cur, m, nearestEnemy, nearestDis) {
+    let score = 0;
+    //则获取最近敌人及最短距离，目标点离最近敌人的距离越短，得分越大（最大为移动点数）
+    let mDis = this.getDistance(m, [nearestEnemy.x, nearestEnemy.y]);
+    console.log("最近敌人距离，移动目标坐标", m, "和最近敌人距离", nearestDis, mDis);
+    score = nearestDis - mDis;
+
+    //判断身旁有多少敌人，每有一个敌人则：-基础分*命中概率50% =  -50 * 50% = -25;
+    let roundEnemys = this.getRoundEnemys(cur);
+    //console.log("周围敌人：", roundEnemys);
+    if (roundEnemys.length > 0) {
+      score += roundEnemys.length * -25
+    }
+    return score;
   }
 
   //获取指定坐标的单位
@@ -226,12 +203,11 @@ export default class AI {
   }
 
   //创建一个操作
-  createAction(skill, movePoint, score) {
+  createAction(skillID, movePoint, score) {
     return {
-      skillName:skill.type,
-      skill:skill,
+      skillID: skillID,
       movePoint: movePoint,
-      score: score,
+      score: score
     }
   }
 

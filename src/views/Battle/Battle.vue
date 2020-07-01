@@ -55,6 +55,7 @@
     
     <!-- 底部按钮 -->
     <BottomBtns :curPeo="curPeo" :round="round" @click_cancle="click_cancle" @click_end="click_end"></BottomBtns>
+    <FooterNav></FooterNav>
   </div>
 </template>
 
@@ -100,7 +101,7 @@
         map:this.map,
       });
       
-      //this.nextRound();
+      this.nextRound();
     },
     methods: {
       //点击人员
@@ -140,7 +141,7 @@
           p.__proto__ = new People;
           p.update();
         });
-        this.putPeos("myTeam");
+        //this.putPeos("myTeam"); ////////////////////临时调试
       },
 
       //初始化敌方
