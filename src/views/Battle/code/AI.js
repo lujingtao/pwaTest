@@ -1,5 +1,5 @@
 //AI
-import { getPeoSkills, o2o, getAtkResult } from "@/class/Tool.js";
+import { getPeoSkills, o2o, getAtkResult, getPointUnit } from "@/class/Tool.js";
 export default class AI {
   constructor(option) {
     this.enemys = option.enemys; //敌方
@@ -16,23 +16,26 @@ export default class AI {
     console.log(this);
 
     this.enemys.forEach(cur => {
-      console.log(cur.name + "开始行动");
+      this.tree = [];
+      console.log(cur, cur.name, "开始行动");
       console.log("初始位置", [cur.x, cur.y]);
       this.skills = getPeoSkills(cur);
       console.log("获取所有技能", this.skills);
       this.skills.forEach(skill => {
         this.createLeaf(cur, skill);
       });
-      this.tree.sort( (a,b)=> b.score - a.score);
+      this.tree.sort((a, b) => b.score - a.score);
       console.log("AI生成决策树", this.tree);
+      console.timeEnd('AI生成决策树耗时');
+      let action = this.getRandomAction(this.tree);
+      cur.doAction( point, skill);
     })
-    console.timeEnd('AI生成决策树耗时');
   }
 
   //获取单次决策队列
   createLeaf(cur, skill) {
     if (cur._ap < skill.ap) return;
-    let leaf = {  };
+    let leaf = {};
     console.log("【", skill.type, "】当前ap，技能ap", cur._ap, skill.ap, );
 
     //如果是移动技能
@@ -83,10 +86,9 @@ export default class AI {
     //ai行为结算类型account 0：独立计算 1：伤害计算
     if (skill.account == 1) {
       units.forEach(unit => {
-        let damge = this.getEstimateOneDamage(cur, unit, skill);
-        score += unit.hp - damge <=0?100:damge;
+        score += this.getEstimateOneScore(cur, unit, skill);
       });
-      
+
     } else {
       switch (skill.id) {
         case 17: //架盾
@@ -100,23 +102,58 @@ export default class AI {
   }
 
   //预估单个害值
-  getEstimateOneDamage(cur, unit, skill) {
-    let damge = 0;
+  getEstimateOneScore(cur, unit, skill) {
+    console.log("人员：", cur, "目标：", unit, "技能：", skill);
+    let result = {
+      bh: 0, //破马伤害
+      ba: 0, //破甲伤害
+      pa: 0, //穿甲伤害
+      bs: 0, //破盾伤害
+    }
+
     //没有武器装备，伤害为1
     if (!cur._equips.leftHand) {
-      damge = 1;
-    } else {
-      let atk = cur._a.atk;
-      //目标没有传盔甲则穿甲率为1，否则为武器穿甲率
-      let pa = unit._equips.body ? cur._equips.leftHand.pa / 100 : 1;
-      //技能对伤害的加成
-      pa = skill.effect.pa ? pa + skill.effect.pa : pa;
-      pa = pa > 1 ? 1 : pa;
-      atk = skill.effect.atk ? pa + skill.effect.atk : atk;
-      
-      damge = Math.round(atk * pa);
+      result.pa = 1;
+      result.bh = 1;
+      result.ba = 1;
+      result.bs = 1;
+      return result.pa;
     }
-    console.log("预期单个伤害：",damge);
+    let headPaDamage = this.getOnePaDamage(cur, unit, skill, "head");
+    let bodyPaDamage = this.getOnePaDamage(cur, unit, skill, "body");
+    console.log("预期穿甲伤害，头/身", headPaDamage, bodyPaDamage);
+
+    let maxPa = headPaDamage > bodyPaDamage ? headPaDamage : bodyPaDamage;
+    //穿甲得分为伤害占当前生命的百分比
+    result.pa = maxPa / unit.hp * 100;
+
+    console.log("预期单个分数：", result.pa);
+    return result.pa;
+  }
+
+  //预算单个头部/身体伤害
+  getOnePaDamage(cur, unit, skill, type) {
+    let damge = 0;
+    let atk = cur._a.atk;
+    //目标没有传盔甲则穿甲率为100
+    let pa = unit._equips[type] ? cur._equips.leftHand.pa : 100;
+    //技能对穿甲加成
+    pa = (skill.effect.pa ? pa + skill.effect.pa : pa) / 100;
+    pa = pa > 1 ? 1 : pa;
+    //技能攻击加成
+    atk = skill.effect.atk ? atk + skill.effect.atk : atk;
+    //技能命中加成
+    let hit = cur._a.hit - unit._a.dod;
+    hit = (skill.effect.hit ? hit + skill.effect.hit : hit) / 100;
+    hit = hit > 1 ? 1 : hit;
+    //技能爆头加成
+    let hh = cur._a.hh - unit._a.hhb;
+    hh = (skill.effect.hh ? hh + skill.effect.hh : hh) / 100;
+    hh = hh > 1 ? 1 : hh;
+
+    //伤害 = 攻击 * 穿甲 * 命中概率 * 爆头概率（身体或头部） * 系数（头部1.5,身体1）
+    damge = Math.round(atk * pa * hit * (type == "body" ? 1 - hh : hh) * (type == "body" ? 1 : 1.5));
+    //debugger
     return damge;
   }
 
@@ -137,12 +174,29 @@ export default class AI {
     return score;
   }
 
+  //从决策树中前3个决策按概率随机一个行动
+  getRandomAction(tree) {
+    let totalScore = 0;
+    let randomAry = [];
+    for (var i = 0; i < tree.length; i++) {
+      if (i > 2) break;
+      totalScore += tree[i].score;
+    }
+
+    for (var i = 0; i < tree.length; i++) {
+      if (i > 2) break;
+      randomAry.push([i, tree[i].score / totalScore])
+    }
+    let index = common.getNumberInAppoint(randomAry);
+    console.log("决策树中前3个决策概率/随机结果", randomAry, index);
+    return tree[index];
+  }
 
   //获取技能执行范围内，技能类型及单位类型符合的单位数组
   getTriggerRangeUnits(range, skill) {
     let ary = [];
-    range.forEach(item => {
-      let unit = this.getPointUnit(item);
+    range.forEach(point => {
+      let unit = getPointUnit(point,this.peos, this.elements, this.enemys );
       if (!unit) return;
       if ((unit.type == "peos" && skill.class == 1) ||
         unit.type == "enemys" && skill.class == 0) {
@@ -167,7 +221,7 @@ export default class AI {
     }
   }
 
-  //获取坐标集合范围坐标计算后的最终坐标组
+  //获取指定坐标结合坐标数组计算后的最终坐标组
   getPointRange(p, pAry, map) {
     let ary = [];
     pAry.forEach(item => {
@@ -177,20 +231,6 @@ export default class AI {
       }
     })
     return ary
-  }
-
-  //获取指定坐标的单位
-  getPointUnit(p) {
-    for (let u of this.peos) {
-      if (u.x == p[0] && u.y == p[1]) return { type: "peos", unit: u };
-    }
-    for (let u of this.elements) {
-      if (u.x == p[0] && u.y == p[1]) return { type: "elements", unit: u };
-    }
-    for (let u of this.enemys) {
-      if (u.x == p[0] && u.y == p[1]) return { type: "enemys", unit: u };
-    }
-    return
   }
 
   //获取最近的敌人
@@ -226,11 +266,11 @@ export default class AI {
   }
 
   //创建一个操作
-  createAction(skill, movePoint, score) {
+  createAction(skill, point, score) {
     return {
-      skillName:skill.type,
-      skill:skill,
-      movePoint: movePoint,
+      skillName: skill.type,
+      skill: skill,
+      point: point,
       score: score,
     }
   }

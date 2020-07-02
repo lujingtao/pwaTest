@@ -106,17 +106,31 @@ export function getPeoSkills(peo) {
   return skills;
 }
 
+//获取指定坐标的单位
+export function getPointUnit(p, peos, elements, enemys) {
+  for (let u of peos) {
+    if (u.x == p[0] && u.y == p[1]) return { type: "peos", unit: u };
+  }
+  for (let u of elements) {
+    if (u.x == p[0] && u.y == p[1]) return { type: "elements", unit: u };
+  }
+  for (let u of enemys) {
+    if (u.x == p[0] && u.y == p[1]) return { type: "enemys", unit: u };
+  }
+  return
+}
+
 //获取攻击结果值
 export function getAtkResult(cur, unit, skill) {
   console.log(unit);
   let result = {
-    bh:0, //破马伤害
-    ba:0, //破甲伤害
-    pa:0, //穿甲伤害
-    bs:0, //破盾伤害
+    bh: 0, //破马伤害
+    ba: 0, //破甲伤害
+    pa: 0, //穿甲伤害
+    bs: 0, //破盾伤害
   }
   //console.log("当前人员能力，目标能力", cur._a, unit._a);
   //damge = cur._a.atk * cur_a.pa / 100
-  
+
   return result;
 }
