@@ -111,11 +111,13 @@
         this.skills = getPeoSkills(peo);
         console.log("获取人员技能：",this.skills);
         this.curSkill = this.skills[0];
+        console.log(this.curPeo._ap);
       },
       
       //点击技能
       click_skill(skill){
         this.curSkill = skill;
+        
       },
 
       //地图点击事件
@@ -124,8 +126,9 @@
         console.log(point);
         //如果是人员移动范围则移动，否则取消人员选择
         if (common.indexOf2Array(point, this.moveRange) != -1) {
-          this.curPeo.moveTo(point);
-          this.map.updateBanPoints(this.peos, this.enemys, this.elements);
+          
+          this.curPeo.doAction( point, this.curSkill, this.map, this.peos, this.enemys, this.elements )
+          //this.curPeo.moveTo( );
         }else{
           this.curPeo = null;
           this.curSkill = null;
@@ -161,7 +164,7 @@
           count = common.random(myTeamCount + 2, myTeamCount + 4) }
 
         //调试模式，只有一个敌人
-        count = 1;
+        //count = 1;
 
         for (var i = 0; i < count; i++) {
           let type = types[common.random(0, types.length-1)];
@@ -267,8 +270,25 @@
         console.log("下一回合");
         this.round ++;
         if(this.round%2==0){
-          this.AI.start();
+          this.resetStatus(this.enemys)
+          this.AI.start( this.enemys[0], this.aiCallBack(0) );
+        }else{
+          this.resetStatus(this.peos)
         }
+      },
+      
+      //ai回调
+      aiCallBack(i){
+        i++;
+        if(i>=this.enemys.length) return;
+        this.AI.start( this.enemys[i], this.aiCallBack(i) );
+      },
+      
+      //重置ap和状态
+      resetStatus(units){
+        units.forEach(unit=>{
+          unit.resetStatus()
+        })
       },
       
       //点击取消按钮

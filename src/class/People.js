@@ -1,5 +1,5 @@
 //人类
-import { getPeoSkills, o2o, getAtkResult, getPointUnit } from "@/class/Tool.js";
+import { getPeoSkills, o2o, getAtkResult, getPointUnit, getPointRange, getTriggerRangeUnits, getTriggerRange } from "@/class/Tool.js";
 export default class People {
   constructor() {
     this._equips = {}; //已装备的物品对象组合
@@ -39,42 +39,61 @@ export default class People {
   }
 
   //执行操作
-  doAction(point, skill, map) {
-    console.log("人员",this,"对目标",point,"执行",skill);
-    //如果是移动技能
-    if (skill.id == -1) {
-      this.moveTo(point);
-    } else if (skill.id != -2) {
-      //其它技能
+  doAction(point, skill, map, peos, elements, enemys, callBack) {
+    console.log(this.name, this, "对目标", point, "执行", skill);
+    console.log(this._ap);
+    console.log(skill.ap);
+    this._ap = this._ap - skill.ap;
+    
+    if (skill.id == -1 || skill.id == -2) {
+      this.doOneAction(point, null, skill, map, peos, elements, enemys);
+    } else {
       let skillRange = {}; //范围对象
       let o = data.skillRange.find(item => item.id == skill.rangeID);
       o2o(o, skillRange);
-    
-      let effectiveRange = this.getPointRange([this.x, this.y], skillRange.effective, map);
-      console.log("技能有效范围：", effectiveRange)
-      effectiveRange.forEach(p => {
-        let triggerRange = this.getTriggerRange(p, skillRange);
-        console.log("技能执行范围：", triggerRange);
-        let units = this.getTriggerRangeUnits(triggerRange, skill);
-        console.log("技能执行范围内能实施的单位数组：", units);
-        if (units.length == 0) return;
-        let score = this.getActionScore(this, p, units, skill);
-        leaf = this.createAction(skill, p, score);
-        this.tree.push(leaf);
-        console.warn("创建一个新叶子：", leaf);
+      let triggerRange = getTriggerRange(point, skillRange, map);
+      console.log("技能执行范围：", triggerRange);
+      let units = getTriggerRangeUnits(triggerRange, skill, peos, elements, enemys);
+      console.log("技能执行范围内能实施的单位数组：", units);
+      if (units.length == 0) return;
+      units.forEach(unit => {
+        this.doOneAction(point, unit, skill, map, peos, elements, enemys)
       })
-    } else {
-      //结束技能
-      leaf = this.createAction(skill, [this.x, this.y], 0);
-      this.tree.push(leaf);
-      console.warn("创建一个新叶子：", leaf);
     }
+    if (callBack) callBack();
+  }
+
+  //执行单个操作
+  doOneAction(point, unit, skill, map, peos, elements, enemys) {
+    switch (skill.id) {
+      case -1: //移动
+        this.moveTo(point, map, peos, elements, enemys);
+        break;
+      case -2: //待机
+        this._status = "end";
+        break;
+      case 17: //架盾
+
+        break;
+      case 6: //架盾
+
+        break;
+      case 9: //钩击
+
+        break;
+      default: //攻击
+
+        break;
+    }
+
+
   }
 
   //移动
-  moveTo(point) {
+  moveTo(point, map, peos, elements, enemys) {
     this.x = point[0];
     this.y = point[1];
+    map.updateBanPoints(peos, elements, enemys);
   }
 
   //获取周围四个点的值
@@ -119,6 +138,12 @@ export default class People {
     let moveRange_ = this.getMoveRange(map);
     map.drawActionCell(moveRange_, "moveRange");
     return moveRange_;
+  }
+  
+  //重置ap和状态
+  resetStatus(){
+    this._ap = 6;
+    this._status = "waiting";
   }
 
   // //初始化事件

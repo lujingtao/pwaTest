@@ -120,6 +120,49 @@ export function getPointUnit(p, peos, elements, enemys) {
   return
 }
 
+//获取技能执行范围内，技能类型及单位类型符合的单位数组
+export function getTriggerRangeUnits(range, skill, peos, elements, enemys) {
+  let ary = [];
+  range.forEach(point => {
+    let unit = getPointUnit(point, peos, elements, enemys);
+    if (!unit) return;
+    if ((unit.type == "peos" && skill.class == 1) ||
+      unit.type == "enemys" && skill.class == 0) {
+      ary.push(unit.unit)
+    }
+  })
+  return ary;
+}
+
+//获取技能触发范围 p:指定技能范围一点
+export function getTriggerRange(p, skillRange, map) {
+  let ary = [];
+  if (skillRange.type == 1) {
+    //触发范围类型：中心点
+    return getPointRange(p, skillRange.trigger, map);
+  } else if (skillRange.type == 2) {
+    //触发范围类型：枚举
+    for (let item of skillRange.trigger) {
+      let pRange = getPointRange(p, item, map);
+      if (common.indexOf2Array(p, pRange)) return pRange;
+    }
+  }
+}
+
+//获取指定坐标结合坐标数组计算后的最终坐标组
+export function getPointRange(p, pAry, map) {
+  let ary = [];
+  pAry.forEach(item => {
+    let _p = [item[0] + p[0], item[1] + p[1]];
+    if (0 <= _p[0] && _p[0] < map.cols && 0 <= _p[1] && _p[1] < map.rows) {
+      ary.push(_p)
+    }
+  })
+  return ary
+}
+
+
+
 //获取攻击结果值
 export function getAtkResult(cur, unit, skill) {
   console.log(unit);

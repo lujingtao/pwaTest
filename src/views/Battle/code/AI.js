@@ -1,5 +1,5 @@
 //AI
-import { getPeoSkills, o2o, getAtkResult, getPointUnit } from "@/class/Tool.js";
+import { getPeoSkills, o2o, getAtkResult, getPointUnit, getPointRange, getTriggerRangeUnits, getTriggerRange} from "@/class/Tool.js";
 export default class AI {
   constructor(option) {
     this.enemys = option.enemys; //敌方
@@ -11,25 +11,29 @@ export default class AI {
   }
 
   //开始
-  start() {
+  start( cur, callBack ) {
     console.time('AI生成决策树耗时');
-    console.log(this);
-
-    this.enemys.forEach(cur => {
-      this.tree = [];
-      console.log(cur, cur.name, "开始行动");
-      console.log("初始位置", [cur.x, cur.y]);
-      this.skills = getPeoSkills(cur);
-      console.log("获取所有技能", this.skills);
-      this.skills.forEach(skill => {
-        this.createLeaf(cur, skill);
-      });
-      this.tree.sort((a, b) => b.score - a.score);
-      console.log("AI生成决策树", this.tree);
-      console.timeEnd('AI生成决策树耗时');
-      let action = this.getRandomAction(this.tree);
-      cur.doAction( point, skill);
-    })
+    this.tree = [];
+    console.log(cur, cur.name, "开始行动");
+    console.log("初始位置", [cur.x, cur.y]);
+    this.skills = getPeoSkills(cur);
+    console.log("获取所有技能", this.skills);
+    this.skills.forEach(skill => {
+      this.createLeaf(cur, skill);
+    });
+    this.tree.sort((a, b) => b.score - a.score);
+    console.warn( cur.name, "AI生成决策树", this.tree);
+    console.timeEnd('AI生成决策树耗时');
+    let action = this.getRandomAction(this.tree);
+    cur.doAction( action.point, action.skill, this.map , this.peos, this.elements, this.enemys, ()=>{
+      setTimeout(()=>{
+        if(cur._status=="end"){
+          if(callBack) callBack();
+        }else{
+          this.start( cur, callBack)
+        }
+      },1000)
+    } );
   }
 
   //获取单次决策队列
@@ -51,7 +55,7 @@ export default class AI {
         let score = this.getMoveScore(cur, p, nearestEnemy, nearestDis);
         leaf = this.createAction(skill, p, score);
         this.tree.push(leaf);
-        console.warn("创建一个新叶子：", leaf);
+        //console.warn("创建一个新叶子：", leaf);
       }
     } else if (skill.id != -2) {
       //其它技能
@@ -59,24 +63,24 @@ export default class AI {
       let o = data.skillRange.find(item => item.id == skill.rangeID);
       o2o(o, skillRange);
 
-      let effectiveRange = this.getPointRange([cur.x, cur.y], skillRange.effective, this.map);
-      console.log("技能有效范围：", effectiveRange)
+      let effectiveRange = getPointRange([cur.x, cur.y], skillRange.effective, this.map);
+      //console.log("技能有效范围：", effectiveRange)
       effectiveRange.forEach(p => {
-        let triggerRange = this.getTriggerRange(p, skillRange);
-        console.log("技能执行范围：", triggerRange);
-        let units = this.getTriggerRangeUnits(triggerRange, skill);
-        console.log("技能执行范围内能实施的单位数组：", units);
+        let triggerRange = getTriggerRange(p, skillRange, this.map);
+        //console.log("技能执行范围：", triggerRange);
+        let units = getTriggerRangeUnits(triggerRange, skill, this.peos, this.elements, this.enemys );
+        //console.log("技能执行范围内能实施的单位数组：", units);
         if (units.length == 0) return;
         let score = this.getActionScore(cur, p, units, skill);
         leaf = this.createAction(skill, p, score);
         this.tree.push(leaf);
-        console.warn("创建一个新叶子：", leaf);
+        //console.warn("创建一个新叶子：", leaf);
       })
     } else {
       //结束技能
       leaf = this.createAction(skill, [cur.x, cur.y], 0);
       this.tree.push(leaf);
-      console.warn("创建一个新叶子：", leaf);
+      //console.warn("创建一个新叶子：", leaf);
     }
   }
 
@@ -176,61 +180,26 @@ export default class AI {
 
   //从决策树中前3个决策按概率随机一个行动
   getRandomAction(tree) {
+    
     let totalScore = 0;
     let randomAry = [];
     for (var i = 0; i < tree.length; i++) {
-      if (i > 2) break;
+      if (i > 2 || tree[i].score<0 ) break;
       totalScore += tree[i].score;
+    }
+    
+    if(totalScore == 0){
+      console.log("决策树中前3个决策总分为0，返回第一个决策", 0);
+      return tree[0];
     }
 
     for (var i = 0; i < tree.length; i++) {
-      if (i > 2) break;
+      if (i > 2 || tree[i].score<0 ) break;
       randomAry.push([i, tree[i].score / totalScore])
     }
     let index = common.getNumberInAppoint(randomAry);
     console.log("决策树中前3个决策概率/随机结果", randomAry, index);
     return tree[index];
-  }
-
-  //获取技能执行范围内，技能类型及单位类型符合的单位数组
-  getTriggerRangeUnits(range, skill) {
-    let ary = [];
-    range.forEach(point => {
-      let unit = getPointUnit(point,this.peos, this.elements, this.enemys );
-      if (!unit) return;
-      if ((unit.type == "peos" && skill.class == 1) ||
-        unit.type == "enemys" && skill.class == 0) {
-        ary.push(unit.unit)
-      }
-    })
-    return ary;
-  }
-
-  //获取技能触发范围 p:指定技能范围一点
-  getTriggerRange(p, skillRange) {
-    let ary = [];
-    if (skillRange.type == 1) {
-      //触发范围类型：中心点
-      return this.getPointRange(p, skillRange.trigger, this.map);
-    } else if (skillRange.type == 2) {
-      //触发范围类型：枚举
-      for (let item of skillRange.trigger) {
-        let pRange = this.getPointRange(p, item, this.map);
-        if (common.indexOf2Array(p, pRange)) return pRange;
-      }
-    }
-  }
-
-  //获取指定坐标结合坐标数组计算后的最终坐标组
-  getPointRange(p, pAry, map) {
-    let ary = [];
-    pAry.forEach(item => {
-      let _p = [item[0] + p[0], item[1] + p[1]];
-      if (0 <= _p[0] && _p[0] < map.cols && 0 <= _p[1] && _p[1] < map.rows) {
-        ary.push(_p)
-      }
-    })
-    return ary
   }
 
   //获取最近的敌人
