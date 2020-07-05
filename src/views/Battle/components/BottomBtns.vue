@@ -78,7 +78,7 @@
 <style lang="scss" scoped>
   .btns {
     position: absolute;
-    bottom: 10px;
+    bottom: 57px;
     left: 0;
     right: 0;
 

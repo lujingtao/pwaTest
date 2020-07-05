@@ -42,7 +42,7 @@
           console.log(newValue);
           this.update()
         },
-        deep: true
+        deep: false
       }
     },
     mounted() {

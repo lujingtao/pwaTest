@@ -126,7 +126,7 @@ export default class Map {
     for (let x = 0; x < this.cols; x++) {
       for (let y = 0; y < this.rows; y++) {
         if (ary != undefined && common.indexOf2Array([x, y], ary) != -1) {
-          this.ctx.fillStyle = type == "attackRange" ? "#f00" : "#008800";
+          this.ctx.fillStyle = type == "moveRange" ? "#008800" : "#FF6600";
         }else{
           this.ctx.fillStyle = "#000";
         }

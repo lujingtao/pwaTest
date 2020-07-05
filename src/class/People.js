@@ -2,20 +2,35 @@
 import { getPeoSkills, o2o, getAtkResult, getPointUnit, getPointRange, getTriggerRangeUnits, getTriggerRange } from "@/class/Tool.js";
 export default class People {
   constructor() {
-    this._equips = {}; //已装备的物品对象组合
-    this._a = {}; //经过装备、状态统计后的能力，攻击力、命中率等
-    this._ap = 6; //行动点数
-    this._status = "waiting"; //当前人员状态
-    // this.$peos = null;
-    // this.attackRange = [];
-    // this.state = "";
-    // this.curPeo = null;
+  }
+
+  init() {
+    //非存储数据
+    this._a = {  //装备、buff等加成后的能力
+      atk: 0, //攻击
+      hit: 0, //命中
+      dod: 0, //闪避
+      atkb: 0, //反击
+      fatkb: 0, //先手反击
+      hh: 0, //爆头率
+      hhb: 0, //被爆头率
+      mor: 0, //士气
+      bh: 0, // 破马
+      ba: 0, //破甲
+      pa: 0, //穿甲
+      bs: 0, //破盾
+    }; 
+    this._ap = 6;//行动点数
+    this._state = "waiting";//当前人员状态
+    this._equips = {};//已装备的物品对象组合
+    this._moveRange = [];
+    this._actionRange = [];
   }
 
   //更新属性
-  update() {
+  update(skill) {
     this.updatePeoEquips();
-    this.updateAbility();
+    this.updateAbility(skill);
   }
 
   //使用peoEquips存储装备对象
@@ -26,25 +41,55 @@ export default class People {
   }
 
   //更新能力值
-  updateAbility() {
+  updateAbility(skill) {
+    this.setAbility(this); //身体
     let lh = this._equips.leftHand;
-    this._a.atk = this.pow + (lh ? lh.atk : 0);
-    this._a.hit = 80 + this.agi + (lh ? lh.hit : 0);
-    this._a.dod = this.agi;
-    this._a.atkb = this.skill;
-    this._a.fatkb = Math.round(this.skill / 2);
-    this._a.hh = this.luck + (lh ? lh.hh : 0); //爆头率
-    this._a.hhb = -this.luck; //被爆头率
-    this._a.mor = 100 + this.will;
+    if(lh){
+      this.setAbility(lh); //武器
+      this.setAbility(lh.effect); //武器效果
+    }
+    if(skill){ 
+      this.setAbility(skill.effect); //使用技能
+    }
+    this.buffs.forEach(buff=>{ //人物所有buff
+      
+    })
+    this._a.hit += 80; //基础命中80
+    this._a.mor += 100; //基础士气100
+  }
+  
+  setAbility(obj){
+    for (let key in obj) {
+      if(!this._a[key]) return;
+      this._a[key] += obj[key]?;
+      switch (key){
+        case "pow":
+          this._a.atk += obj[key];
+          break;
+        case "agi":
+          this._a.hit += obj[key];
+          this._a.dod += obj[key];
+          break;
+        case "skill":
+          this._a.atkb += obj[key];
+          this._a.fatkb += Math.round(obj[key] / 2);
+          break;
+        case "luck":
+          this._a.hh += obj[key];
+          this._a.hhb -= obj[key];
+          break;
+        case "will":
+          this._a.mor += obj[key];
+          break;
+      }
+    }
   }
 
   //执行操作
   doAction(point, skill, map, peos, elements, enemys, callBack) {
     console.log(this.name, this, "对目标", point, "执行", skill);
-    console.log(this._ap);
-    console.log(skill.ap);
     this._ap = this._ap - skill.ap;
-    
+
     if (skill.id == -1 || skill.id == -2) {
       this.doOneAction(point, null, skill, map, peos, elements, enemys);
     } else {
@@ -70,7 +115,7 @@ export default class People {
         this.moveTo(point, map, peos, elements, enemys);
         break;
       case -2: //待机
-        this._status = "end";
+        this._state = "end";
         break;
       case 17: //架盾
 
@@ -91,9 +136,11 @@ export default class People {
 
   //移动
   moveTo(point, map, peos, elements, enemys) {
+    this._state = "waiting";
     this.x = point[0];
     this.y = point[1];
     map.updateBanPoints(peos, elements, enemys);
+    this.clearRange(map);
   }
 
   //获取周围四个点的值
@@ -133,97 +180,43 @@ export default class People {
     return openAry;
   }
 
+  //生成通用技能范围
+  creatSkillRange(map, skill) {
+    this._state = "action";
+    let skillRange = {}; //范围对象
+    let o = data.skillRange.find(item => item.id == skill.rangeID);
+    o2o(o, skillRange);
+    let effectiveRange = getPointRange([this.x, this.y], skillRange.effective, map);
+    this._actionRange = effectiveRange;
+    map.drawActionCell(this._actionRange, "skillRange");
+    // let triggerRange = getTriggerRange(point, skillRange, map);
+    // console.log("技能执行范围：", triggerRange);
+  }
+
   //生成移动范围
   creatMoveRange(map) {
-    let moveRange_ = this.getMoveRange(map);
-    map.drawActionCell(moveRange_, "moveRange");
-    return moveRange_;
+    this._state = "moving";
+    this._moveRange = this.getMoveRange(map);
+    map.drawActionCell(this._moveRange, "moveRange");
   }
-  
+
   //重置ap和状态
-  resetStatus(){
+  resetStatus() {
+    this._state = "waiting";
     this._ap = 6;
-    this._status = "waiting";
   }
 
-  // //初始化事件
-  // initEvent() {
-  //   this.$peos.querySelectorAll(".peo").forEach($peo => {
-  //     let curPeo = this.getPeoById($peo.getAttribute("id").split("_")[1]);
+  //清除移动范围和攻击范围
+  clearRange(map) {
+    this._state = "waiting";
+    map.clearActionCell();
+    this._moveRange = [];
+    this._actionRange = [];
+  }
 
-  //     let startX = 0;
-  //     let startY = 0;
-  //     let endX = 0;
-  //     let endY = 0;
-  //     let targetPoint = {};
-
-  //     //触摸开始
-  //     let start = function(e) {
-  //       e.stopPropagation();
-  //       let point = game.hasTouch ? e.touches[0] : e;
-  //       game.people.curPeo = curPeo;
-  //       targetPoint = { x: curPeo.x, y: curPeo.y };
-
-  //       startX = point.pageX - curPeo.x * map.unitSize;
-  //       startY = point.pageY - curPeo.y * map.unitSize;
-
-  //       game.people.creatMoveRange(curPeo, map.banPoints);
-  //       game.people.state = "moving";
-  //       //$peo.addEventListener(game.touchMove, move, false);
-  //       //$peo.addEventListener(game.touchEnd, end, false);
-  //     }
-
-  //     //触摸移动
-  //     let move = function(e) {
-  //       let point = game.hasTouch ? e.touches[0] : e;
-  //       e.preventDefault();
-  //       endX = point.pageX - startX;
-  //       endY = point.pageY - startY;
-
-  //       //拖动界限
-  //       endX = endX <= 0 ? 0 : endX;
-  //       endY = endY <= 0 ? 0 : endY;
-  //       endX = endX >= (map.cols - 1) * map.unitSize ? (map.cols - 1) * map.unitSize : endX;
-  //       endY = endY >= (map.rows - 1) * map.unitSize ? (map.rows - 1) * map.unitSize : endY;
-
-  //       $peo.style.transform = "translate3d(" + endX + "px," + endY + "px,0);"
-  //       // $peo.setAttribute("style", "transform:translate3d(" + endX + "px, " + endY + "px, 0px);");
-
-  //       //计算目标坐标
-  //       targetPoint = {
-  //         x: parseInt(endX / map.unitSize + 1 / 2),
-  //         y: parseInt(endY / map.unitSize + 1 / 2)
-  //       };
-
-  //       map.showTargetPoint(targetPoint);
-  //     }
-
-  //     //触摸结束
-  //     let end = function(e) {
-  //       console.log(endX,endY);
-  //       if ( endX !=0 || endY != 0) {
-  //         game.people.move(targetPoint);
-  //       }
-
-  //       $peo.removeEventListener(game.touchStart, end, false);
-  //       $peo.removeEventListener(game.touchMove, move, false);
-  //       $peo.removeEventListener(game.touchEnd, end, false);
-  //     }
-
-  //     $peo.addEventListener(game.touchStart, start, false);
-
-  //   })
-
-  // }
-
-  // //通过id获取人员
-  // getPeoById(id) {
-  //   return game.data.peos.find(peo => peo.id == id);
-  // }
-
-  // //通过id获取人员对象元素
-  // getPeoEleById(id) {
-  //   return document.getElementById("peo_" + id)
-  // }
-
+  //是否敌方人员
+  isEnemy(enemys) {
+    let unit = enemys.find(item => item.id == this.id);
+    return unit ? true : false;
+  }
 }

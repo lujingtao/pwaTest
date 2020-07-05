@@ -27,7 +27,7 @@ export default class AI {
     let action = this.getRandomAction(this.tree);
     cur.doAction( action.point, action.skill, this.map , this.peos, this.elements, this.enemys, ()=>{
       setTimeout(()=>{
-        if(cur._status=="end"){
+        if(cur._state=="end"){
           if(callBack) callBack();
         }else{
           this.start( cur, callBack)

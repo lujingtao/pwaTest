@@ -28,15 +28,17 @@ export function createPeo(type) {
     leftHand: '',
     rightHand: '',
   };
-  peo.x = 0,
-    peo.y = 0,
-    //数据统计相关
-    peo.battles = 0;
+  peo.x = 0;
+  peo.y = 0;
+  peo.buffs = [];
+  //数据统计相关
+  peo.battles = 0;
   peo.kills = 0;
   peo.damages = 0;
   peo.hits = 0; //命中
   peo.dodges = 0; //闪避
   peo.crits = 0; //暴击
+
   return peo;
 }
 
