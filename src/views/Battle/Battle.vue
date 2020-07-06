@@ -25,9 +25,7 @@
               <li v-for="peo in enemys" :key="peo.id" :id="peo.id" :class="[curPeo==peo?'active':'', peo._state=='end'?'end':'']"
                 :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px','fontSize':unitSize+'px'}">
                 <Peo :peo="peo"></Peo>
-                <span class="hit" v-show="common.indexOf2Array([peo.x,peo.y], curPeo._actionRange) != -1">
-                  
-                </span>
+               <span class="hit" v-if="curPeo && common.indexOf2Array([peo.x,peo.y], curPeo._actionRange) != -1">{{(curPeo._a.hit - peo._a.dod)+"%"}}</span>
               </li>
             </ul>
           </section>
@@ -74,7 +72,7 @@
   import BottomBtns from './components/BottomBtns.vue';
   import PeoStatus from '@/views/Team/components/PeoStatus.vue';
   import Map from "@/class/Map.js";
-  import { createPeo, createGood, o2o, getPeoSkills, getPointUnit } from "@/class/Tool.js";
+  import { createPeo, createGood, getPeoSkills, getPointUnit } from "@/class/Tool.js";
   import AI from './code/AI.js';
   export default {
     components: { Peo, PeoStatus, BottomBtns },
@@ -116,9 +114,10 @@
 
       //点击技能
       click_skill(skill) {
-        this.curPeo.clearRange(this.map);
+        this.curPeo.cancle(this.map);
         if (this.curPeo._state == "end" || this.curPeo._ap < skill.ap) return;
         this.curSkill = skill;
+        this.curPeo.updateAbility(skill);
         if (skill.id == -1) {
           this.curPeo.creatMoveRange(this.map);
         } else if (skill.id == -2) {
@@ -151,7 +150,7 @@
             if (common.indexOf2Array(point, this.curPeo._actionRange) != -1) {
               //如果是敌人则无效
               if(this.curPeo.isEnemy(this.enemys)) return;
-              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.enemys, this.elements)
+              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.elements, this.enemys)
             } else {
               this.checkUnit(unit);
             }
@@ -189,7 +188,6 @@
         game.curSave.myTeam.forEach(peo => {
           peo.__proto__ = new People;
           peo.init();
-          peo.update();
           this.peos.push(peo);
         });
         this.putPeos("myTeam");
@@ -369,7 +367,7 @@
       //点击取消按钮
       click_cancle() {
         if(this.curPeo){
-          this.curPeo.clearRange(this.map);
+          this.curPeo.cancle(this.map);
           this.curPeo = null;
         }
         this.curSkill = null;
@@ -471,7 +469,17 @@
       }
 
       .end {
-        opacity: .5;
+        .peo{
+          opacity: .5;
+        }
+      }
+      
+      .hit{
+        font-size: .4em;
+        position: absolute;
+        left:0;
+        right: 0;
+        top:31%;
       }
     }
 
@@ -480,7 +488,7 @@
     }
 
     .enemys .peoAP {
-      display: none;
+      //display: none;
     }
 
     .PeoStatus {

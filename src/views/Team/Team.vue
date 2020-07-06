@@ -1,7 +1,7 @@
 <template>
   <div components="Team" class="team">
     <section class="info" v-if="peo">
-      
+
       <PeoStatus :peo="peo"></PeoStatus>
       <table class="attrTable">
         <tr>
@@ -124,7 +124,8 @@
     <FooterNav></FooterNav>
 
     <!-- 切换装备 -->
-    <SwitchEquip v-if="showSwitchEquip" :peo="peo" :equip="peo._equips[equipKey]" :equipKey="equipKey" @SwitchEquip_hide="SwitchEquip_hide"></SwitchEquip>
+    <SwitchEquip v-if="showSwitchEquip" :peo="peo" :equip="peo._equips[equipKey]" :equipKey="equipKey"
+      @SwitchEquip_hide="SwitchEquip_hide"></SwitchEquip>
   </div>
 </template>
 
@@ -134,7 +135,7 @@
   import PeoStatus from './components/PeoStatus.vue';
   import SwitchEquip from './components/SwitchEquip.vue';
   export default {
-    components: { Peo, SwitchEquip,PeoStatus },
+    components: { Peo, SwitchEquip, PeoStatus },
     data() {
       return {
         divs: 13, //多少格
@@ -150,21 +151,23 @@
       //console.log("读取存档1");
       //game.curSave = game.load(1);
       this.peos = game.curSave.myTeam;
-      if(this.peos.length==0){
+      if (this.peos.length == 0) {
         this.$toast.fail('请先招募队员');
         return;
       }
+      this.peos.forEach(peo=>{
+        peo.__proto__ = new People;
+        peo.init();
+      })
       this.peo = this.peos[0];
       this.click_peo(this.peo)
-      console.log("当前人物：", this.peo);
     },
     mounted() {},
     methods: {
 
       click_peo(item) {
         this.peo = item;
-        this.peo.__proto__ = new People;
-        this.peo.update();
+        console.log("当前人物：", this.peo);
       },
 
       click_equip(key) {
@@ -175,7 +178,7 @@
       //隐藏装备切换页面
       SwitchEquip_hide() {
         this.showSwitchEquip = false;
-        this.peo.update();
+        this.peo.updateAbility();
       }
     },
   }

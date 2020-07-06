@@ -143,7 +143,7 @@
       
       //确认装备物品
       confirmItem(item){
-        this.peo.equip[this.equipKey] = item.id;
+        this.peo.updateEquip(this.equipKey,item.id);
         this.click_cancle();
       },
 

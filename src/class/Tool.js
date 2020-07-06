@@ -1,3 +1,11 @@
+//获取字段某表指定id项目
+export function getDataItem(key, id){
+  let item = {}; 
+  let o = data[key].find(e => e.id == id);
+  o2o(o, item);
+  return item;
+}
+
 //创建人物
 export function createPeo(type) {
   let peo = {};
@@ -87,14 +95,13 @@ export function o2o(source, target) {
       //数字类型
       target[k] = Number(val);
     }
-
   }
 }
 
 //获取人员全部技能（默认增加移动技能和结束技能）
 export function getPeoSkills(peo) {
-  let leftHandSkills = peo._equips.leftHand ? peo._equips.leftHand.skill : [];
-  let rightHandSkills = peo._equips.rightHand ? peo._equips.rightHand.skill : [];
+  let leftHandSkills = peo._equips.leftHand ? peo._equips.leftHand.skills : [];
+  let rightHandSkills = peo._equips.rightHand ? peo._equips.rightHand.skills : [];
   let skills = [];
   let skillsIdAry = leftHandSkills.concat(rightHandSkills);
   skillsIdAry.unshift("-1");
@@ -122,14 +129,15 @@ export function getPointUnit(p, peos, elements, enemys) {
   return
 }
 
-//获取技能执行范围内，技能类型及单位类型符合的单位数组
-export function getTriggerRangeUnits(range, skill, peos, elements, enemys) {
+//获取技能执行范围内，技能类型及单位类型符合的单位数组 cur:执行主体
+export function getTriggerRangeUnits( cur, range, skill, peos, elements, enemys) {
   let ary = [];
   range.forEach(point => {
     let unit = getPointUnit(point, peos, elements, enemys);
     if (!unit) return;
-    if ((unit.type == "peos" && skill.class == 1) ||
-      unit.type == "enemys" && skill.class == 0) {
+    let isEnemy = cur.isEnemy(enemys);
+    if ((unit.type == "peos" && skill.class == (isEnemy?1:0 )) ||
+      unit.type == "enemys" && skill.class == (isEnemy?0:1 )) {
       ary.push(unit.unit)
     }
   })
@@ -162,8 +170,6 @@ export function getPointRange(p, pAry, map) {
   })
   return ary
 }
-
-
 
 //获取攻击结果值
 export function getAtkResult(cur, unit, skill) {

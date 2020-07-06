@@ -1,5 +1,5 @@
 //AI
-import { getPeoSkills, o2o, getAtkResult, getPointUnit, getPointRange, getTriggerRangeUnits, getTriggerRange} from "@/class/Tool.js";
+import { getPeoSkills, o2o, getDataItem, getAtkResult, getPointUnit, getPointRange, getTriggerRangeUnits, getTriggerRange} from "@/class/Tool.js";
 export default class AI {
   constructor(option) {
     this.enemys = option.enemys; //敌方
@@ -59,16 +59,14 @@ export default class AI {
       }
     } else if (skill.id != -2) {
       //其它技能
-      let skillRange = {}; //范围对象
-      let o = data.skillRange.find(item => item.id == skill.rangeID);
-      o2o(o, skillRange);
+      let skillRange =  getDataItem("skillRange", skill.rangeID); //范围对象
 
       let effectiveRange = getPointRange([cur.x, cur.y], skillRange.effective, this.map);
       //console.log("技能有效范围：", effectiveRange)
       effectiveRange.forEach(p => {
         let triggerRange = getTriggerRange(p, skillRange, this.map);
         //console.log("技能执行范围：", triggerRange);
-        let units = getTriggerRangeUnits(triggerRange, skill, this.peos, this.elements, this.enemys );
+        let units = getTriggerRangeUnits( cur, triggerRange, skill, this.peos, this.elements, this.enemys );
         //console.log("技能执行范围内能实施的单位数组：", units);
         if (units.length == 0) return;
         let score = this.getActionScore(cur, p, units, skill);

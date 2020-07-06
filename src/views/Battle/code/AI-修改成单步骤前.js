@@ -1,5 +1,5 @@
 //AI
-import { getPeoSkills, o2o } from "@/class/Tool.js";
+import { getPeoSkills, o2o, getDataItem } from "@/class/Tool.js";
 export default class AI {
   constructor(option) {
     this.enemys = option.enemys; //敌方
@@ -69,9 +69,7 @@ export default class AI {
       }
     } else if (skill.id != -2) {
       //其它技能
-      let skillRange = {}; //范围对象
-      let o = data.skillRange.find(item => item.id == skill.rangeID);
-      o2o(o, skillRange);
+      let skillRange = getDataItem("skillRange",skill.rangeID); //范围对象
 
       let effectiveRange = this.getPointRange([cur.x, cur.y], skillRange.effective, this.map);
       console.log("技能有效范围：", effectiveRange)

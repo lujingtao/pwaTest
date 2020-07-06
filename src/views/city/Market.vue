@@ -22,9 +22,9 @@
                 <p v-if="JSON.stringify(curItem.effect) != '{}'">
                   效果：待处理
                 </p>
-                <p v-if="curItem.skill.length>0">
+                <p v-if="curItem.skills.length>0">
                   技能：
-                  <van-tag v-for="s in curItem.skill" :key="s" :type="data.skills[s].class=='0'?'default':'success'">{{data.skills[s].type}}</van-tag>
+                  <van-tag v-for="s in curItem.skills" :key="s" :type="data.skills[s].class=='0'?'default':'success'">{{data.skills[s].type}}</van-tag>
                 </p>
                 <ul class="attr">
                   <li>品质：{{curItem.qua}}</li>

@@ -16,6 +16,11 @@
         盔甲：<span class="line dur"><i :style="{'width':bodyPerc+'%'}"></i><b>{{bodyData}}</b></span>
       </li>
     </ul>
+    <div class="buffs">
+      <van-tag v-for="item in peo._buffs" :key="item.id" type="success">
+        {{ item.type }}
+      </van-tag>
+    </div>
   </div>
 </template>
 
@@ -95,7 +100,7 @@
       position: relative;
       text-align: left;
       line-height: 17px;
-      margin-bottom: 20px;
+      margin-bottom: 5px;
 
       .item {
         position: relative;
@@ -130,6 +135,10 @@
         position: relative;
         text-shadow: 1px 1px 0 #000;
       }
+    }
+    
+    .buffs{
+      text-align: right;
     }
 
     .dur {

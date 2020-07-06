@@ -12,6 +12,7 @@
       }
     },
     created() {
+      
       //调试时使用，默认读取第一个存档
       if(!game.curSave){
         game.curSave = game.load(1);

@@ -1,47 +1,72 @@
 //人类
-import { getPeoSkills, o2o, getAtkResult, getPointUnit, getPointRange, getTriggerRangeUnits, getTriggerRange } from "@/class/Tool.js";
+import { getDataItem, getPointRange, getTriggerRangeUnits, getTriggerRange } from "@/class/Tool.js";
 export default class People {
   constructor() {
   }
 
   init() {
     //非存储数据
-    this._a = {  //装备、buff等加成后的能力
-      atk: 0, //攻击
-      hit: 0, //命中
-      dod: 0, //闪避
-      atkb: 0, //反击
-      fatkb: 0, //先手反击
-      hh: 0, //爆头率
-      hhb: 0, //被爆头率
-      mor: 0, //士气
-      bh: 0, // 破马
-      ba: 0, //破甲
-      pa: 0, //穿甲
-      bs: 0, //破盾
-    }; 
     this._ap = 6;//行动点数
-    this._state = "waiting";//当前人员状态
-    this._equips = {};//已装备的物品对象组合
+    this._state = "waiting";//当前人员状态，waiting、moving、activing
     this._moveRange = [];
     this._actionRange = [];
+    this._a = {};//装备、buff等加成后的能力
+    this.initAbility();
+    this._buffs=[];
+    this.initBuffs_(); //初始化buffs
+    this._equips = {}; //已装备的物品对象组合
+    this.updateEquips_();
   }
 
   //更新属性
-  update(skill) {
-    this.updatePeoEquips();
-    this.updateAbility(skill);
+  // update(skill) {
+  //   this.updatePeoEquips();
+  //   this.updateAbility(skill);
+  // }
+  
+  //初始化能力
+  initAbility(){
+    //this._a.maxHp;
+    
+    this._a.atk=0; //攻击
+    this._a.hit=0; //命中
+    this._a.dod=0; //闪避
+    this._a.atkb=0; //反击
+    this._a.fatkb=0; //先手反击
+    this._a.hh=0; //爆头率
+    this._a.hhb=0; //被爆头率
+    this._a.mor=0; //士气
+    this._a.bh=0; // 破马
+    this._a.ba=0; //破甲
+    this._a.pa=0; //穿甲
+    this._a.bs=0; //破盾
+    //this._a.move=
+  }
+  
+  //初始化_buffs
+  initBuffs_(){
+    this.buffs.forEach(id=>{
+      this._buffs.push(getDataItem("buffs",id))
+    })
   }
 
-  //使用peoEquips存储装备对象
-  updatePeoEquips() {
+  //更新装备装备存储对象
+  updateEquips_() {
     for (let key in this.equip) {
       this._equips[key] = common.getGoods(this.equip[key], "myGoods");
     }
+    this.updateAbility();
+  }
+  
+  //更新装备
+  updateEquip(type,id){
+    this.equip[type] = id;
+    this.updateEquips_();
   }
 
   //更新能力值
   updateAbility(skill) {
+    this.initAbility();
     this.setAbility(this); //身体
     let lh = this._equips.leftHand;
     if(lh){
@@ -51,17 +76,15 @@ export default class People {
     if(skill){ 
       this.setAbility(skill.effect); //使用技能
     }
-    this.buffs.forEach(buff=>{ //人物所有buff
-      
-    })
+    this._buffs.forEach(buff=>{ //人物所有buff
+      this.setAbility(buff.effect); //buff效果
+    });
     this._a.hit += 80; //基础命中80
     this._a.mor += 100; //基础士气100
   }
   
   setAbility(obj){
     for (let key in obj) {
-      if(!this._a[key]) return;
-      this._a[key] += obj[key]?;
       switch (key){
         case "pow":
           this._a.atk += obj[key];
@@ -82,28 +105,28 @@ export default class People {
           this._a.mor += obj[key];
           break;
       }
+      if(!this._a[key]) continue; //位置不能置前
+      this._a[key] += obj[key];
     }
   }
 
   //执行操作
   doAction(point, skill, map, peos, elements, enemys, callBack) {
     console.log(this.name, this, "对目标", point, "执行", skill);
-    this._ap = this._ap - skill.ap;
-
     if (skill.id == -1 || skill.id == -2) {
       this.doOneAction(point, null, skill, map, peos, elements, enemys);
+      this._ap = this._ap - skill.ap;
     } else {
-      let skillRange = {}; //范围对象
-      let o = data.skillRange.find(item => item.id == skill.rangeID);
-      o2o(o, skillRange);
+      let skillRange = getDataItem("skillRange",skill.rangeID); //范围对象
       let triggerRange = getTriggerRange(point, skillRange, map);
       console.log("技能执行范围：", triggerRange);
-      let units = getTriggerRangeUnits(triggerRange, skill, peos, elements, enemys);
+      let units = getTriggerRangeUnits( this, triggerRange, skill, peos, elements, enemys);
       console.log("技能执行范围内能实施的单位数组：", units);
       if (units.length == 0) return;
       units.forEach(unit => {
         this.doOneAction(point, unit, skill, map, peos, elements, enemys)
       })
+      this._ap = this._ap - skill.ap;
     }
     if (callBack) callBack();
   }
@@ -115,23 +138,73 @@ export default class People {
         this.moveTo(point, map, peos, elements, enemys);
         break;
       case -2: //待机
-        this._state = "end";
+        this.end(map);
         break;
       case 17: //架盾
-
+        this.addBuffs(skill.buffs)
         break;
-      case 6: //架盾
+      case 6: //推击
 
         break;
       case 9: //钩击
 
         break;
       default: //攻击
-
+        this.attack(unit);
         break;
     }
 
 
+  }
+  
+  //攻击
+  attack(unit){
+    //计算命中率
+    let hit = this._a.hit - unit._a.dod;
+    hit = hit>100?100:hit;
+    let hitRandom = common.random(1,100);
+    let isHit = hitRandom<=hit;
+    console.log(this.name + "攻击" + unit.name,"【",hit,hitRandom,"】",isHit?"命中":"miss" );
+    if(!isHit) return;
+    let leftHand = this._equips["leftHand"];
+    let head = unit._equips["head"];
+    let body = unit._equips["body"];
+    
+    if(!leftHand){
+      unit.hp--;
+      if(head){
+        head.dur--;
+      }
+      if(body){
+        body.dur--;
+      }
+      return;
+    }
+    //计算爆头率
+    let hh = this._a.hh + unit._a.hhb;
+    hh = hh>100?100:hh;
+    let hhRandom = common.random(1,100);
+    let isHh = hhRandom<=hh;
+    
+    if(isHh){ //攻击头部
+      let head = unit._equips["head"];
+      if(head){
+        //head.dur -= 
+      }else{
+        
+      }
+      //目标没有传盔甲则穿甲率为100
+      let pa = unit._equips["head"] ? this._a.pa : 100;
+      
+    }else{ //攻击身体
+      
+    }
+  }
+  
+  //结束
+  end(map){
+    this._state = "end";
+    this.cancle(map);
   }
 
   //移动
@@ -140,7 +213,22 @@ export default class People {
     this.x = point[0];
     this.y = point[1];
     map.updateBanPoints(peos, elements, enemys);
-    this.clearRange(map);
+    this.cancle(map);
+  }
+  
+  //添加buff，先检查是否存在buff，如果存在则更新buff（重置buff回合）
+  addBuffs(buffsAry){
+    buffsAry.forEach( id=>{
+      if( this.buffs.indexOf(id) == -1){
+        this.buffs.push(id);
+        this._buffs.push(getDataItem("buffs",id));
+      }else{
+        let buff = getDataItem("buffs",id);
+        let _buff = this._buffs.find( item=> item.id == id);
+        _buff.round = buff.round;
+      }
+    });
+    this.updateAbility();
   }
 
   //获取周围四个点的值
@@ -182,10 +270,8 @@ export default class People {
 
   //生成通用技能范围
   creatSkillRange(map, skill) {
-    this._state = "action";
-    let skillRange = {}; //范围对象
-    let o = data.skillRange.find(item => item.id == skill.rangeID);
-    o2o(o, skillRange);
+    this._state = "activing";
+    let skillRange = getDataItem("skillRange",skill.rangeID); //范围对象
     let effectiveRange = getPointRange([this.x, this.y], skillRange.effective, map);
     this._actionRange = effectiveRange;
     map.drawActionCell(this._actionRange, "skillRange");
@@ -206,9 +292,10 @@ export default class People {
     this._ap = 6;
   }
 
-  //清除移动范围和攻击范围
-  clearRange(map) {
-    this._state = "waiting";
+  //取消选择（清除移动范围和攻击范围）
+  cancle(map) {
+    this._state = this._state =="end"?"end":"waiting";
+    this.updateAbility();
     map.clearActionCell();
     this._moveRange = [];
     this._actionRange = [];
