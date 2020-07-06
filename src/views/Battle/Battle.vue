@@ -141,7 +141,9 @@
             if (common.indexOf2Array(point, this.curPeo._moveRange) != -1) {
               //如果是敌人则无效
               if(this.curPeo.isEnemy(this.enemys)) return;
-              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.enemys, this.elements)
+              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.enemys, this.elements, ()=>{
+                this.curSkill = null;
+              })
             } else {
               this.checkUnit(unit);
             }
@@ -150,7 +152,9 @@
             if (common.indexOf2Array(point, this.curPeo._actionRange) != -1) {
               //如果是敌人则无效
               if(this.curPeo.isEnemy(this.enemys)) return;
-              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.elements, this.enemys)
+              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.elements, this.enemys, ()=>{
+                this.curSkill = null;
+              })
             } else {
               this.checkUnit(unit);
             }

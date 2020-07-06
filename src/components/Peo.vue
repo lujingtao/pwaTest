@@ -39,10 +39,9 @@
       peo: {
         handler(newValue, oldValue) {
           console.log("peo属性变更");
-          console.log(newValue);
           this.update()
         },
-        deep: false
+        deep: true
       }
     },
     mounted() {

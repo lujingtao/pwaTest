@@ -105,7 +105,7 @@ export default class People {
           this._a.mor += obj[key];
           break;
       }
-      if(!this._a[key]) continue; //位置不能置前
+      if(this._a[key]==undefined) continue; //位置不能置前
       this._a[key] += obj[key];
     }
   }
@@ -113,6 +113,10 @@ export default class People {
   //执行操作
   doAction(point, skill, map, peos, elements, enemys, callBack) {
     console.log(this.name, this, "对目标", point, "执行", skill);
+    if( this._ap < skill.ap){
+      console.log("ap不足");
+      return;
+    }
     if (skill.id == -1 || skill.id == -2) {
       this.doOneAction(point, null, skill, map, peos, elements, enemys);
       this._ap = this._ap - skill.ap;
@@ -128,6 +132,7 @@ export default class People {
       })
       this._ap = this._ap - skill.ap;
     }
+    this.cancle(map);
     if (callBack) callBack();
   }
 
@@ -164,47 +169,45 @@ export default class People {
     hit = hit>100?100:hit;
     let hitRandom = common.random(1,100);
     let isHit = hitRandom<=hit;
-    console.log(this.name + "攻击" + unit.name,"【",hit,hitRandom,"】",isHit?"命中":"miss" );
+    console.log(`【${this.name}】攻击【${unit.name}】,【${hit},${hitRandom}】,${isHit?'命中':'miss'}`);
     if(!isHit) return;
-    let leftHand = this._equips["leftHand"];
-    let head = unit._equips["head"];
-    let body = unit._equips["body"];
     
-    if(!leftHand){
-      unit.hp--;
-      if(head){
-        head.dur--;
-      }
-      if(body){
-        body.dur--;
-      }
-      return;
-    }
     //计算爆头率
     let hh = this._a.hh + unit._a.hhb;
     hh = hh>100?100:hh;
     let hhRandom = common.random(1,100);
     let isHh = hhRandom<=hh;
-    
-    if(isHh){ //攻击头部
-      let head = unit._equips["head"];
-      if(head){
-        //head.dur -= 
-      }else{
-        
-      }
-      //目标没有传盔甲则穿甲率为100
-      let pa = unit._equips["head"] ? this._a.pa : 100;
-      
-    }else{ //攻击身体
-      
+    this.attackAccount( isHh?'head':'body', unit );
+  }
+  
+  //攻击结算
+  attackAccount(position,unit){
+    let leftHand = this._equips["leftHand"];
+    let equip = unit._equips[position];
+    let damage = 0;
+    let equipDamage = 0;
+    let weight = position=="head"?1.5:1;
+    if(leftHand){ //攻击方有武器
+      let pa = equip?this._a.pa:100;
+      pa = pa>100?100:pa;
+      damage = this._a.atk * this._a.pa * weight /100;
+      equipDamage = equip?this._a.atk*this._a.ba /100:0;
+    }else{ //攻击方无武器
+      damage = 1 * weight;
+      equipDamage = equip?2:0;
     }
+    damage = Math.round(damage);
+    equipDamage = Math.round(equipDamage);
+    unit.hp -= damage;
+    if(equip){
+      equip.dur -= equipDamage;
+    }
+    console.log(`命中【${position}】，hp：-${damage}，装备：-${equipDamage}`);
   }
   
   //结束
   end(map){
     this._state = "end";
-    this.cancle(map);
   }
 
   //移动
@@ -213,7 +216,6 @@ export default class People {
     this.x = point[0];
     this.y = point[1];
     map.updateBanPoints(peos, elements, enemys);
-    this.cancle(map);
   }
   
   //添加buff，先检查是否存在buff，如果存在则更新buff（重置buff回合）
