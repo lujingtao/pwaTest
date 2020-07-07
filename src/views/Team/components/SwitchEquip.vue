@@ -62,8 +62,8 @@
     props: ['peo', 'equip', 'equipKey'],
     data() {
       return {
-        curItem: null,
-        targetItem: null,
+        curItem: null, //当前装备
+        targetItem: null, //选择目标装备
         items: [],
         compare:{
           type:undefined,
@@ -143,7 +143,7 @@
       
       //确认装备物品
       confirmItem(item){
-        this.peo.updateEquip(this.equipKey,item.id);
+        this.peo.switchEquip(this.equipKey, this.curItem, this.targetItem);
         this.click_cancle();
       },
 

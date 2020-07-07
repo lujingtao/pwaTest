@@ -39,6 +39,7 @@ export function createPeo(type) {
   peo.x = 0;
   peo.y = 0;
   peo.buffs = [];
+  peo.skills = [-1,99];//技能，默认添加移动和结束技能
   //数据统计相关
   peo.battles = 0;
   peo.kills = 0;
@@ -105,7 +106,7 @@ export function getPeoSkills(peo) {
   let skills = [];
   let skillsIdAry = leftHandSkills.concat(rightHandSkills);
   skillsIdAry.unshift("-1");
-  skillsIdAry.push("-2");
+  skillsIdAry.push("99");
   skillsIdAry.forEach(id => {
     let skill = {};
     let o = data.skills.find(item => item.id == id);
@@ -118,13 +119,13 @@ export function getPeoSkills(peo) {
 //获取指定坐标的单位
 export function getPointUnit(p, peos, elements, enemys) {
   for (let u of peos) {
-    if (u.x == p[0] && u.y == p[1]) return { type: "peos", unit: u };
+    if (u.x == p[0] && u.y == p[1]) return u;
   }
   for (let u of elements) {
-    if (u.x == p[0] && u.y == p[1]) return { type: "elements", unit: u };
+    if (u.x == p[0] && u.y == p[1]) return u;
   }
   for (let u of enemys) {
-    if (u.x == p[0] && u.y == p[1]) return { type: "enemys", unit: u };
+    if (u.x == p[0] && u.y == p[1]) return u;
   }
   return
 }
@@ -135,10 +136,12 @@ export function getTriggerRangeUnits( cur, range, skill, peos, elements, enemys)
   range.forEach(point => {
     let unit = getPointUnit(point, peos, elements, enemys);
     if (!unit) return;
-    let isEnemy = cur.isEnemy(enemys);
-    if ((unit.type == "peos" && skill.class == (isEnemy?1:0 )) ||
-      unit.type == "enemys" && skill.class == (isEnemy?0:1 )) {
-      ary.push(unit.unit)
+    if ( ( cur._type=="our" && unit._type == "enemy" && skill.class ==1 ) ||
+         ( cur._type=="our" && unit._type == "our" && skill.class == 0 ) || 
+         ( cur._type=="enemy" && unit._type == "our" && skill.class ==1 ) ||
+         ( cur._type=="enemy" && unit._type == "enemy" && skill.class == 0 ) 
+      ) {
+      ary.push(unit)
     }
   })
   return ary;

@@ -6,11 +6,7 @@ export default class Game {
     this.touchStart = '';
     this.touchMove = '';
     this.touchEnd = '';
-
-    //数据字典
-    this.data = {};
-    //地图对象
-    this.map = null;
+    
     //所有存档
     this.saveFiles = [];
     //当前存档内容
@@ -19,6 +15,8 @@ export default class Game {
     this.peosUpdateCount = 8;
     //商品刷新数量
     this.goodsUpdateCount = 20;
+    //战斗场景人物行为计时器
+    this.actionTimer = null;
   }
   //初始化
   init() {

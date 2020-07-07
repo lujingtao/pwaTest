@@ -16,9 +16,9 @@ export default class AI {
     this.tree = [];
     console.log(cur, cur.name, "开始行动");
     console.log("初始位置", [cur.x, cur.y]);
-    this.skills = getPeoSkills(cur);
-    console.log("获取所有技能", this.skills);
-    this.skills.forEach(skill => {
+    // this.skills = getPeoSkills(cur);
+    // console.log("获取所有技能", this.skills);
+    cur._skills.forEach(skill => {
       this.createLeaf(cur, skill);
     });
     this.tree.sort((a, b) => b.score - a.score);
@@ -26,13 +26,11 @@ export default class AI {
     console.timeEnd('AI生成决策树耗时');
     let action = this.getRandomAction(this.tree);
     cur.doAction( action.point, action.skill, this.map , this.peos, this.elements, this.enemys, ()=>{
-      setTimeout(()=>{
-        if(cur._state=="end"){
-          if(callBack) callBack();
-        }else{
-          this.start( cur, callBack)
-        }
-      },1000)
+      if(cur._state=="end"){
+        if(callBack) callBack();
+      }else{
+        this.start( cur, callBack)
+      }
     } );
   }
 
@@ -47,17 +45,17 @@ export default class AI {
       let move = skill.move;
       let moveRange = cur.getMoveRange(this.map);
 
-      console.log("移动范围", moveRange);
+      //console.log("移动范围", moveRange);
       let nearestEnemy = this.getNearestEnemy(cur);
       let nearestDis = this.getDistance([cur.x, cur.y], [nearestEnemy.x, nearestEnemy.y]);
-      console.log("获取最近敌人", nearestEnemy, [nearestEnemy.x, nearestEnemy.y]);
+      //console.log("获取最近敌人", nearestEnemy, [nearestEnemy.x, nearestEnemy.y]);
       for (let p of moveRange) {
         let score = this.getMoveScore(cur, p, nearestEnemy, nearestDis);
         leaf = this.createAction(skill, p, score);
         this.tree.push(leaf);
         //console.warn("创建一个新叶子：", leaf);
       }
-    } else if (skill.id != -2) {
+    } else if (skill.id != 99) {
       //其它技能
       let skillRange =  getDataItem("skillRange", skill.rangeID); //范围对象
 
@@ -95,6 +93,9 @@ export default class AI {
       switch (skill.id) {
         case 17: //架盾
           score = 10;
+          break;
+        case 18: //下盾
+          score = 0;
           break;
         default:
           break;
@@ -164,7 +165,7 @@ export default class AI {
     let score = 0;
     //则获取最近敌人及最短距离，目标点离最近敌人的距离越短，得分越大（最大为移动点数）
     let mDis = this.getDistance(m, [nearestEnemy.x, nearestEnemy.y]);
-    console.log("最近敌人距离，移动目标坐标", m, "和最近敌人距离", nearestDis, mDis);
+    //console.log("最近敌人距离，移动目标坐标", m, "和最近敌人距离", nearestDis, mDis);
     score = nearestDis - mDis;
 
     //判断身旁有多少敌人，每有一个敌人则：-基础分*命中概率50% =  -50 * 50% = -25;

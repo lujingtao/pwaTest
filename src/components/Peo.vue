@@ -14,7 +14,7 @@
     <span v-if="peo._equips" class="equips">
       <i v-if="peo._equips.body" :class="['body', 'iconfont','icon-'+peo._equips.body.type+'-'+peo._equips.body.qua]"></i>
       <i v-if="peo._equips.leftHand" :class="['leftHand', 'iconfont','icon-'+peo._equips.leftHand.type+'-'+peo._equips.leftHand.qua]"></i>
-      <i v-if="peo._equips.rightHand" :class="['rightHand', 'iconfont','icon-'+peo._equips.rightHand.type+'-'+peo._equips.rightHand.qua]"></i>
+      <i v-if="peo._equips.rightHand" :class="['rightHand', 'iconfont','icon-'+peo._equips.rightHand.type+'-'+peo._equips.rightHand.qua, peo.buffs.indexOf(0)!=-1?'up':'']"></i>
     </span>
     <div class="name">{{peo.name}}</div>
     <span class="peoAP">
@@ -22,6 +22,7 @@
         <s v-show="i<=peo._ap"></s>
       </i>
     </span>
+    <span class="stateDes">{{peo._animateDes}}</span>
   </section>
 </template>
 
@@ -32,13 +33,15 @@
         hpPerc: 0,
         headPerc: 0,
         bodyPerc: 0,
+        stateTimer:null,
       }
     },
     props: ["peo"],
     watch: {
       peo: {
         handler(newValue, oldValue) {
-          console.log("peo属性变更");
+          //console.log("peo属性变更");
+          this.checkAnimateState(newValue);
           this.update()
         },
         deep: true
@@ -48,6 +51,16 @@
       this.update()
     },
     methods: {
+      checkAnimateState(peo){
+        if(peo._animate=="attacked" && peo._animateDes!=""){
+          let $peo = document.getElementById(peo.id).querySelector(".peo");
+          $peo.classList.add(peo._animate);
+          this.stateTimer = setTimeout(()=>{
+            $peo.classList.remove(peo._animate);
+          },500)
+        }
+      },
+      
       update() {
         this.hpPerc = Math.round(this.peo.hp / this.peo.hpMax * 100);
 
@@ -60,6 +73,10 @@
           100) : 0;
       }
     },
+    
+    beforeDestroy() {
+      clearTimeout(this.stateTimer)
+    }
   }
 </script>
 
@@ -95,6 +112,7 @@
         display: block;
         height: 100%;
         background: #15d400;
+        transition: 1s;
       }
     }
 
@@ -135,6 +153,32 @@
       color: #fff;
       opacity: 1;
       text-shadow: 1px 1px 2px #000;
+      transition: .5s;
+    }
+    
+    .rightHand.up{
+      bottom:10px;
+    }
+    
+    .stateDes{
+      font-size: .4em;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top:0;
+      text-align: center;
+      //display: none;
+      opacity: 0;
+      z-index: 10;
+      text-shadow: 1px 1px 2px #000;
     }
   }
+  
+  .attacked .stateDes{
+    transition: .5s;
+    //display: block;
+    top:-30px;
+    opacity: 1;
+  }
+  
 </style>

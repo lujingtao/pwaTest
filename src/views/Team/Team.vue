@@ -148,18 +148,17 @@
     },
 
     created() {
-      //console.log("读取存档1");
-      //game.curSave = game.load(1);
-      this.peos = game.curSave.myTeam;
-      if (this.peos.length == 0) {
+      let peos = game.curSave.myTeam;
+      if (peos.length == 0) {
         this.$toast.fail('请先招募队员');
         return;
       }
-      this.peos.forEach(peo=>{
+      peos.forEach(peo=>{
         peo.__proto__ = new People;
         peo.init();
-      })
-      this.peo = this.peos[0];
+      });
+      this.peos = peos;
+      this.peo = peos[0];
       this.click_peo(this.peo)
     },
     mounted() {},

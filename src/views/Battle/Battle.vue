@@ -25,7 +25,7 @@
               <li v-for="peo in enemys" :key="peo.id" :id="peo.id" :class="[curPeo==peo?'active':'', peo._state=='end'?'end':'']"
                 :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px','fontSize':unitSize+'px'}">
                 <Peo :peo="peo"></Peo>
-               <span class="hit" v-if="curPeo && common.indexOf2Array([peo.x,peo.y], curPeo._actionRange) != -1">{{(curPeo._a.hit - peo._a.dod)+"%"}}</span>
+                <span class="hit" v-if="curPeo && common.indexOf2Array([peo.x,peo.y], curPeo._actionRange) != -1">{{(curPeo._a.hit - peo._a.dod)+"%"}}</span>
               </li>
             </ul>
           </section>
@@ -47,8 +47,8 @@
 
     <!-- 技能 -->
     <div class="skills">
-      <ul>
-        <li v-for="skill in skills" :key="skill.id" @click="click_skill(skill)" :class="curSkill==skill?'cur':''"
+      <ul v-if="curPeo">
+        <li v-for="skill in curPeo._skills" :key="skill.id" @click="click_skill(skill)" :class="curSkill==skill?'cur':''"
           :style="{'width':unitSize+'px','height':unitSize+'px','fontSize':unitSize+'px','lineHeight':unitSize+'px'}">
           <div :class="['in',(curPeo._state=='end' || curPeo._ap < skill.ap)?'disabled':'']">
             <span class="peoAP">
@@ -120,7 +120,7 @@
         this.curPeo.updateAbility(skill);
         if (skill.id == -1) {
           this.curPeo.creatMoveRange(this.map);
-        } else if (skill.id == -2) {
+        } else if (skill.id == 99) {
           this.curPeo.doAction(null, this.curSkill, this.map, this.peos, this.enemys, this.elements)
         } else {
           this.curPeo.creatSkillRange(this.map, skill);
@@ -137,11 +137,11 @@
         //已有人员激活
         if (this.curPeo) {
           //如果是移动状态
-          if (this.curPeo._state == "moving") {
+          if (this.curPeo._state == "moveRange") {
             if (common.indexOf2Array(point, this.curPeo._moveRange) != -1) {
               //如果是敌人则无效
-              if(this.curPeo.isEnemy(this.enemys)) return;
-              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.enemys, this.elements, ()=>{
+              if (this.curPeo._type=="enemy") return;
+              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.enemys, this.elements, () => {
                 this.curSkill = null;
               })
             } else {
@@ -151,8 +151,8 @@
             //如果是行动状态
             if (common.indexOf2Array(point, this.curPeo._actionRange) != -1) {
               //如果是敌人则无效
-              if(this.curPeo.isEnemy(this.enemys)) return;
-              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.elements, this.enemys, ()=>{
+              if (this.curPeo._type=="enemy") return;
+              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.elements, this.enemys, () => {
                 this.curSkill = null;
               })
             } else {
@@ -165,23 +165,22 @@
         }
 
       },
-      
+
       //检测点击点是否存在单位
-      checkUnit(unit){
+      checkUnit(unit) {
         if (unit) {
           this.click_unit(unit)
-        }else{
+        } else {
           this.click_cancle()
         }
       },
-      
+
       //点击单位
       click_unit(unit) {
-        if (unit.type == "peos" || unit.type == "enemys") {
-          this.curPeo = unit.unit;
-          this.skills = getPeoSkills(this.curPeo);
-          console.log("获取人员技能：", this.skills);
-          this.click_skill(this.skills[0])
+        if (unit._type == "our" || unit._type == "enemy") {
+          this.curPeo = unit;
+          //this.skills = getPeoSkills(this.curPeo);
+          this.click_skill(this.curPeo._skills[0])
         } else {
           this.click_cancle()
         }
@@ -191,9 +190,10 @@
       initPeos() {
         game.curSave.myTeam.forEach(peo => {
           peo.__proto__ = new People;
-          peo.init();
+          peo.init("our");
           this.peos.push(peo);
         });
+        console.log("我方", this.peos);
         this.putPeos("myTeam");
       },
 
@@ -219,14 +219,13 @@
           count = common.random(myTeamCount + 2, myTeamCount + 4)
         }
 
-        //调试模式，只有一个敌人
-        //count = 1;
+        //调试模式，只有二个敌人
+        count = 2;
         for (var i = 0; i < count; i++) {
           let type = types[common.random(0, types.length - 1)];
           let peo = createPeo(type);
-          peo.move = 1; //调试模式，移动力只有1
           peo.__proto__ = new People;
-          peo.init();
+          peo.init("enemy");
           this.createEnemyEquips(peo);
           peo.updateAbility();
           this.enemys.push(peo);
@@ -281,15 +280,18 @@
             undefined;
         }
 
-        peo.equip.head = head ? head.id : "";
-        peo.equip.body = body.id;
-        peo.equip.leftHand = leftHand.id;
-        peo.equip.rightHand = rightHand ? rightHand.id : "";
-
-        peo._equips.head = head ? head : undefined;
-        peo._equips.body = body;
-        peo._equips.leftHand = leftHand;
-        peo._equips.rightHand = rightHand ? rightHand : undefined;
+        if (head) {
+          peo.addEquip("head", head)
+        }
+        if (body) {
+          peo.addEquip("body", body)
+        }
+        if (leftHand) {
+          peo.addEquip("leftHand", leftHand)
+        }
+        if (rightHand) {
+          peo.addEquip("rightHand", rightHand)
+        }
       },
 
       //初始化地图元素（障碍物等）
@@ -307,7 +309,8 @@
             id: common.createUniqueId(),
             type: types[common.random(0, types.length - 1)],
             x: point[0],
-            y: point[1]
+            y: point[1],
+            _type:"element"
           }
           this.elements.push(ele);
           this.map.banPoints.push([ele.x, ele.y]);
@@ -345,7 +348,9 @@
         console.warn("第" + this.round + "回合，" + (this.round % 2 == 0 ? "敌方" : "我方") + "开始");
         if (this.round % 2 == 0) {
           this.resetStatus(this.enemys)
-          this.AI.start(this.enemys[0], this.aiCallBack(0));
+          this.AI.start(this.enemys[0], () => {
+            this.aiCallBack(0)
+          });
         } else {
           this.resetStatus(this.peos)
         }
@@ -358,7 +363,9 @@
           this.nextRound();
           return;
         };
-        this.AI.start(this.enemys[i], this.aiCallBack(i));
+        this.AI.start(this.enemys[i], () => {
+          this.aiCallBack(i)
+        });
       },
 
       //重置ap和状态
@@ -370,7 +377,7 @@
 
       //点击取消按钮
       click_cancle() {
-        if(this.curPeo){
+        if (this.curPeo) {
           this.curPeo.cancle(this.map);
           this.curPeo = null;
         }
@@ -386,6 +393,7 @@
 
     },
     beforeDestroy() {
+      clearTimeout(game.actionTimer);
       this.$mapMask.removeEventListener(game.touchStart, this.touchMap)
     }
   }
@@ -473,17 +481,17 @@
       }
 
       .end {
-        .peo{
-          opacity: .5;
+        .peo {
+          opacity: .8;
         }
       }
-      
-      .hit{
+
+      .hit {
         font-size: .4em;
         position: absolute;
-        left:0;
+        left: 0;
         right: 0;
-        top:31%;
+        top: 31%;
       }
     }
 
@@ -579,7 +587,5 @@
         background: #55A532;
       }
     }
-
-
   }
 </style>

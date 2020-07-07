@@ -72,7 +72,7 @@ export default class Map {
       startY = point.pageY - Number(touchArea.style.transform.split("px,")[1]);
       
       //拖拽人物
-      // if(game.people.state=="moving"){
+      // if(game.people.state=="moveRange"){
       //   let targetPoint = common.getMapPoint(e,game.map.unitSize,game.map.$mapDrag);
       //   if(common.indexOf2Array( [targetPoint.x,targetPoint.y], game.people.moveRange )!=-1){
       //     game.people.move(targetPoint);

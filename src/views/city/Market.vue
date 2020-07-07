@@ -44,15 +44,16 @@
                 </ul>
               </div>
             </div>
+            <van-button style="position: absolute;right:10px;bottom:10px;" size="small" type="primary" @touchend.native.prevent="buyAll()">全部购买</van-button>
           </section>
           <section class="items">
             <van-grid :column-num="4" :gutter="10">
-              <van-grid-item v-for="item in items" :key="item.id" :id="'item_'+item.id" @click="clickItem(item)"
+              <van-grid-item v-for="item in items" :key="item.id" :id="'item_'+item.id" @touchend.native.prevent="clickItem(item)"
                 :canbuy="item.canbuy">
                 <i :class="['iconfont','icon-'+item.type+'-'+item.qua]"></i>
                 <span class="van-grid-item__text">{{item.name}}</span>
                 <i class="price">${{item.price}}</i>
-                <van-button style="display: none;" v-if="item.canbuy" type="primary" @click="buy(item)">购买</van-button>
+                <van-button style="display: none;" v-if="item.canbuy" type="primary" @touchend.native.prevent="buy(item)">购买</van-button>
               </van-grid-item>
             </van-grid>
           </section>
@@ -105,6 +106,7 @@
 
       //购买
       buy(item) {
+        if(item.canbuy=="false") return;
         //减少金钱
         game.curSave.gold -= item.price;
 
@@ -123,16 +125,22 @@
             game.curSave.arrow += 100;
             break;
           default:
+            //删除curSave里面的物品
+            let index = game.curSave.goods.findIndex(p => p.id == item.id);
+            game.curSave.goods.splice(index, 1);
             //队伍添加物品
             game.curSave.myGoods.push(item);
             break;
         }
         this.$store.commit("updateStore");
-
-        //删除curSave里面的物品
-        let index = game.curSave.goods.findIndex(p => p.id == item.id);
-        game.curSave.goods.splice(index, 1);
       },
+      
+      //全部购买
+      buyAll(){
+        for (var i = this.items.length-1; i >= 0; i--) {
+          this.buy(this.items[i])
+        }
+      }
     },
   }
 </script>
