@@ -40,7 +40,7 @@
           </section>
 
           <!-- 地图覆盖层，用于地图交互 -->
-          <section id="mapMask"></section>
+          <section id="mapMask" @touchstart.stop="click_map($event)"></section>
         </div>
       </div>
     </div>
@@ -63,6 +63,9 @@
     <!-- 底部按钮 -->
     <BottomBtns :curPeo="curPeo" :round="round" @click_cancle="click_cancle" @click_end="click_end"></BottomBtns>
     <FooterNav></FooterNav>
+
+    <!-- 透明遮罩层（用于执行行动动画时，页面所有元素不能交互） -->
+    <div class="actionMask" v-show="game.actionTimer"></div>
   </div>
 </template>
 
@@ -89,6 +92,7 @@
       }
     },
     created() {
+      this.enemyGoods = []; //随机生成的敌方装备
       this.mapDiv = 9; //横向屏幕划分多少份
       this.mapSize = { xMax: this.mapDiv - 1, yMax: this.mapDiv - 1 };
       this.map = new Map;
@@ -98,7 +102,7 @@
     },
     mounted() {
       this.$map = document.getElementById("map");
-      this.$mapMask = document.getElementById("mapMask");
+      //this.$mapMask = document.getElementById("mapMask");
       this.initMap();
 
       this.AI = new AI({
@@ -121,14 +125,21 @@
         if (skill.id == -1) {
           this.curPeo.creatMoveRange(this.map);
         } else if (skill.id == 99) {
-          this.curPeo.doAction(null, this.curSkill, this.map, this.peos, this.enemys, this.elements)
+          this.curPeo.doAction(null, this.curSkill, this.map, this.peos, this.enemys, this.elements, () => {
+            this.curSkill = null;
+            if (this.isRoundEnd(this.peos)) {
+              this.nextRound()
+            }
+          })
         } else {
           this.curPeo.creatSkillRange(this.map, skill);
         }
       },
 
       //地图点击事件
-      touchMap(e) {
+      click_map(e) {
+        console.log(e);
+        //敌方回合点击无效
         if (this.round % 2 == 0) return;
         let point = common.getMapPoint(e, this.unitSize, document.getElementById("mapWrap"));
         let unit = getPointUnit(point, this.peos, this.elements, this.enemys);
@@ -140,7 +151,7 @@
           if (this.curPeo._state == "moveRange") {
             if (common.indexOf2Array(point, this.curPeo._moveRange) != -1) {
               //如果是敌人则无效
-              if (this.curPeo._type=="enemy") return;
+              if (this.curPeo._type == "enemy") return;
               this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.enemys, this.elements, () => {
                 this.curSkill = null;
               })
@@ -151,9 +162,10 @@
             //如果是行动状态
             if (common.indexOf2Array(point, this.curPeo._actionRange) != -1) {
               //如果是敌人则无效
-              if (this.curPeo._type=="enemy") return;
+              if (this.curPeo._type == "enemy") return;
               this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.elements, this.enemys, () => {
                 this.curSkill = null;
+                this.checkUnitLive();
               })
             } else {
               this.checkUnit(unit);
@@ -164,6 +176,42 @@
           this.checkUnit(unit)
         }
 
+      },
+
+      //检查单位存活状态
+      checkUnitLive() {
+        this.removeDieUnit(this.peos);
+        this.removeDieUnit(this.enemys);
+        return this.checkGameOver();
+      },
+
+      //删除阵亡单位
+      removeDieUnit(ary) {
+        for (let i = ary.length - 1; i >= 0; i--) {
+          if (ary[i].hp <= 0) {
+            ary.splice(i, 1);
+            this.map.updateBanPoints(this.peos, this.elements, this.enemys);
+          }
+        }
+      },
+
+      //是否游戏结束
+      checkGameOver() {
+        if (this.peos.length == 0) {
+          this.$dialog.alert({
+            message: '战斗结束，我方失败',
+          }).then(() => {
+            // on close
+          });
+          return true;
+        } else if (this.enemys.length == 0) {
+          this.$dialog.alert({
+            message: '战斗结束，我方胜利',
+          }).then(() => {
+            // on close
+          });
+          return true;
+        }
       },
 
       //检测点击点是否存在单位
@@ -280,18 +328,17 @@
             undefined;
         }
 
-        if (head) {
-          peo.addEquip("head", head)
-        }
-        if (body) {
-          peo.addEquip("body", body)
-        }
-        if (leftHand) {
-          peo.addEquip("leftHand", leftHand)
-        }
-        if (rightHand) {
-          peo.addEquip("rightHand", rightHand)
-        }
+        this.peoAddEquip(peo, "head", head);
+        this.peoAddEquip(peo, "body", body);
+        this.peoAddEquip(peo, "leftHand", leftHand);
+        this.peoAddEquip(peo, "rightHand", rightHand);
+      },
+
+      //敌方人物穿戴装备
+      peoAddEquip(peo, key, equip) {
+        if (!equip) return;
+        peo.addEquip(key, equip);
+        this.enemyGoods.push(equip)
       },
 
       //初始化地图元素（障碍物等）
@@ -310,7 +357,7 @@
             type: types[common.random(0, types.length - 1)],
             x: point[0],
             y: point[1],
-            _type:"element"
+            _type: "element"
           }
           this.elements.push(ele);
           this.map.banPoints.push([ele.x, ele.y]);
@@ -339,7 +386,7 @@
         option.cols = Math.round((this.mapSize.xMax + 1) * 1);
         option.rows = Math.round((this.mapSize.yMax + 1) * 1);
         this.map.init(option);
-        this.$mapMask.addEventListener(game.touchStart, this.touchMap)
+        //this.$mapMask.addEventListener(game.touchStart, this.click_map)
       },
 
       //下一回合
@@ -347,31 +394,43 @@
         this.round++;
         console.warn("第" + this.round + "回合，" + (this.round % 2 == 0 ? "敌方" : "我方") + "开始");
         if (this.round % 2 == 0) {
-          this.resetStatus(this.enemys)
-          this.AI.start(this.enemys[0], () => {
-            this.aiCallBack(0)
+          this.resetStatusAndCheckBuffs(this.enemys)
+          this.AI.start(this.enemys[0], this.checkUnitLive, () => {
+            this.aiEndCallBack(0)
           });
         } else {
-          this.resetStatus(this.peos)
+          this.resetStatusAndCheckBuffs(this.peos)
         }
       },
 
       //ai回调
-      aiCallBack(i) {
+      aiEndCallBack(i) {
         i++;
-        if (i >= this.enemys.length) {
+        if (this.isRoundEnd(this.enemys)) {
           this.nextRound();
           return;
-        };
-        this.AI.start(this.enemys[i], () => {
-          this.aiCallBack(i)
+        }
+        this.AI.start(this.enemys[i], this.checkUnitLive, () => {
+          this.aiEndCallBack(i)
         });
       },
 
+      //检查是否回合结束
+      isRoundEnd(ary) {
+        let count = ary.length;
+        ary.forEach(peo => {
+          if (peo._state == "end") {
+            count--;
+          }
+        });
+        return count <= 0
+      },
+
       //重置ap和状态
-      resetStatus(units) {
+      resetStatusAndCheckBuffs(units) {
         units.forEach(unit => {
-          unit.resetStatus()
+          unit.resetStatus();
+          unit.checkBuffs();
         })
       },
 
@@ -394,7 +453,8 @@
     },
     beforeDestroy() {
       clearTimeout(game.actionTimer);
-      this.$mapMask.removeEventListener(game.touchStart, this.touchMap)
+      game.actionTimer = null;
+      //this.$mapMask.removeEventListener(game.touchStart, this.click_map)
     }
   }
 </script>
@@ -465,7 +525,7 @@
       >ul>li {
         display: inline-block;
         position: absolute;
-        transition: 0.5s;
+        transition: 1s;
 
         .name {
           display: none;
@@ -477,12 +537,15 @@
       }
 
       .active {
+        // &::after{
+        //   po
+        // }
         background: #f60;
       }
 
       .end {
-        .peo {
-          opacity: .8;
+        .peo .mask {
+          display: block;
         }
       }
 
@@ -492,6 +555,7 @@
         left: 0;
         right: 0;
         top: 31%;
+        //text-shadow: 1px 1px 0 #000;
       }
     }
 
@@ -586,6 +650,15 @@
         height: 100%;
         background: #55A532;
       }
+    }
+
+    .actionMask {
+      z-index: 99;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
     }
   }
 </style>

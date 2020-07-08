@@ -70,12 +70,14 @@ export default class People {
       })
       this._ap = this._ap - skill.ap;
     }
+    map.clearActionCell();
     game.actionTimer = setTimeout(() => {
       this.cancle(map);
       units.forEach(unit => {
         unit._animate = "";
         unit._animateDes = "";
-      })
+      });
+      game.actionTimer = null;
       if (callBack) callBack();
     }, 1000)
   }
@@ -102,19 +104,19 @@ export default class People {
         this.addSkill(17)
         break;
       case 6: //推击
-        this.action_push(point, unit, skill, map, peos, elements, enemys);
+        this.action_push(unit, map, peos, elements, enemys);
         break;
       case 9: //钩击
-        this.action_pull(point, unit, skill, map, peos, elements, enemys);
+        this.action_pull(unit, map, peos, elements, enemys);
         break;
       default: //攻击
-        this.action_attack(unit);
+        this.action_attack(unit, map, peos, elements, enemys);
         break;
     }
   }
 
   //钩击
-  action_pull(point, unit, skill, map, peos, elements, enemys) {
+  action_pull(unit, map, peos, elements, enemys) {
     //相对于目标的中间坐标，公式为 x = (x2 + x1)/2; y = (y2 + y1)/2
     var x = (this.x + unit.x) / 2;
     var y = (this.y + unit.y) / 2;
@@ -129,7 +131,7 @@ export default class People {
   }
 
   //推击
-  action_push(point, unit, skill, map, peos, elements, enemys) {
+  action_push(unit, map, peos, elements, enemys) {
     //相对于目标的后一格坐标，公式为 x = 2 * x2 - x1; y = 2 * y2 - y1
     var x = unit.x * 2 - this.x;
     var y = unit.y * 2 - this.y;
@@ -144,7 +146,7 @@ export default class People {
   }
 
   //攻击
-  action_attack(unit) {
+  action_attack(unit, map, peos, elements, enemys) {
     //this._animate = "attacking";
     unit._animate = "attacked";
 
@@ -164,11 +166,11 @@ export default class People {
     hh = hh > 100 ? 100 : hh;
     let hhRandom = common.random(1, 100);
     let isHh = hhRandom <= hh;
-    this.attackAccount(isHh ? 'head' : 'body', unit);
+    this.attackAccount(unit, map, peos, elements, enemys, isHh ? 'head' : 'body');
   }
 
   //攻击结算
-  attackAccount(position, unit) {
+  attackAccount(unit, map, peos, elements, enemys, position) {
     let leftHand = this._equips["leftHand"];
     let equip = unit._equips[position];
     let damage = 0;
@@ -192,17 +194,23 @@ export default class People {
     }
     unit._animateDes = `-${damage}${position=='head'?'！':''}`;
     console.log(`命中【${position}】，hp：-${damage}，装备：-${equipDamage}`);
-
-    this.checkDie(unit);
+    if (unit.hp <= 0) {
+      console.log("【" + this.name + "】", this, "击杀了", "【" + unit.name + "】",
+        unit);
+    }
+    //this.checkDie(unit, map, peos, elements, enemys);
   }
 
   //是否死亡
-  checkDie(unit) {
-    unit = unit == undefined ? this : unit;
-    if (unit.hp <= 0) {
-      
-    }
-  }
+  // checkDie(unit, map, peos, elements, enemys) {
+  //   unit = unit == undefined ? this : unit;
+  //   if (unit.hp <= 0) {
+  //     let ary = unit._type == "our" ? peos : enemys;
+  //     let index = ary.findIndex(item => item.id == unit.id);
+  //     ary.splice(index, 1);
+  //     map.updateBanPoints(peos, elements, enemys);
+  //   }
+  // }
 
   //结束
   action_end() {
@@ -303,6 +311,23 @@ export default class People {
   removeBuff(id) {
     this.removeItem("buffs", id);
     this.updateAbility();
+  }
+
+  //检查buffs，根据buff状态执行相关操作
+  checkBuffs() {
+    this._buffs.forEach(buff => {
+      if (buff.roundUnit == "time" && buff.round > 0) {
+        switch (buff.id) {
+          case 1: //眩晕，自动跳过当前回合
+            this.action_end();
+            break;
+        }
+        buff.round--;
+        if (buff.round <= 0) {
+          this.removeBuff(buff.id)
+        }
+      }
+    })
   }
 
   //添加表里某一项

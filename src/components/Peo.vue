@@ -22,6 +22,8 @@
         <s v-show="i<=peo._ap"></s>
       </i>
     </span>
+    <!-- 遮罩（用于人物结束时置灰） -->
+    <div class="mask"></div>
     <span class="stateDes">{{peo._animateDes}}</span>
   </section>
 </template>
@@ -171,6 +173,16 @@
       opacity: 0;
       z-index: 10;
       text-shadow: 1px 1px 2px #000;
+    }
+    
+    .mask{
+      display: none;
+      position: absolute;
+      left:0;
+      top:0;
+      right:-4px;
+      bottom:-4px;
+      background: rgba(0,0,0,.6);
     }
   }
   

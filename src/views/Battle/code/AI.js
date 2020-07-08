@@ -11,7 +11,11 @@ export default class AI {
   }
 
   //开始
-  start( cur, callBack ) {
+  start( cur, actionEndCallBack, aiEndcallBack ) {
+    if(cur._state=="end"){
+      if(aiEndcallBack) aiEndcallBack();
+      return;
+    }
     console.time('AI生成决策树耗时');
     this.tree = [];
     console.log(cur, cur.name, "开始行动");
@@ -26,10 +30,13 @@ export default class AI {
     console.timeEnd('AI生成决策树耗时');
     let action = this.getRandomAction(this.tree);
     cur.doAction( action.point, action.skill, this.map , this.peos, this.elements, this.enemys, ()=>{
+      if( actionEndCallBack() ){ //如果游戏结束，则断开
+        return;
+      }
       if(cur._state=="end"){
-        if(callBack) callBack();
+        if(aiEndcallBack) aiEndcallBack();
       }else{
-        this.start( cur, callBack)
+        this.start( cur, actionEndCallBack, aiEndcallBack)
       }
     } );
   }

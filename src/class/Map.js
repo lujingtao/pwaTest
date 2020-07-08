@@ -105,21 +105,6 @@ export default class Map {
     touchArea.addEventListener(game.touchStart, start, false);
 
   }
-
-  //移动目标位置高亮
-  // showTargetPoint(point) {
-  //   for (let x = 0; x < this.cols; x++) {
-  //     for (let y = 0; y < this.rows; y++) {
-  //       if (x == point.x && y == point.y) {
-  //         this.ctx.fillStyle = "#f00";
-  //       } else {
-  //         this.ctx.fillStyle = "#444";
-  //       }
-  //       this.ctx.fillRect(this.unitSize * point.x + 1, this.unitSize * point.y + 1, this.unitSize - 1, this.unitSize -
-  //         1);
-  //     }
-  //   }
-  // }
   
   //绘制行动格子
   drawActionCell(ary, type) {
@@ -165,4 +150,18 @@ export default class Map {
     });
   }
 
+  //移动目标位置高亮
+  // showTargetPoint(point) {
+  //   for (let x = 0; x < this.cols; x++) {
+  //     for (let y = 0; y < this.rows; y++) {
+  //       if (x == point.x && y == point.y) {
+  //         this.ctx.fillStyle = "#f00";
+  //       } else {
+  //         this.ctx.fillStyle = "#444";
+  //       }
+  //       this.ctx.fillRect(this.unitSize * point.x + 1, this.unitSize * point.y + 1, this.unitSize - 1, this.unitSize -
+  //         1);
+  //     }
+  //   }
+  // }
 }
