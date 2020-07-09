@@ -6,17 +6,12 @@ export default class Game {
     this.touchStart = '';
     this.touchMove = '';
     this.touchEnd = '';
-    
-    //所有存档
-    this.saveFiles = [];
-    //当前存档内容
-    this.curSave = null;
-    //人员刷新数量
-    this.peosUpdateCount = 8;
-    //商品刷新数量
-    this.goodsUpdateCount = 20;
-    //战斗场景人物行为计时器
-    this.actionTimer = null;
+    this.saveFiles = []; //所有存档
+    this.curSave = null; //当前存档内容
+    this.peosUpdateCount = 8; //人员刷新数量
+    this.goodsUpdateCount = 20; //商品刷新数量
+    this.animateTimer = null; //战斗场景人物动画计时器
+    this.animateDuration = 0;  //战斗场景人物动画时长
   }
   //初始化
   init() {

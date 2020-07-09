@@ -29,7 +29,7 @@ export default class AI {
     console.warn( cur.name, "AI生成决策树", this.tree);
     console.timeEnd('AI生成决策树耗时');
     let action = this.getRandomAction(this.tree);
-    cur.doAction( action.point, action.skill, this.map , this.peos, this.elements, this.enemys, ()=>{
+    cur.doAction( action.point, action.skill, ()=>{
       if( actionEndCallBack() ){ //如果游戏结束，则断开
         return;
       }
@@ -45,12 +45,12 @@ export default class AI {
   createLeaf(cur, skill) {
     if (cur._ap < skill.ap) return;
     let leaf = {};
-    console.log("【", skill.type, "】当前ap，技能ap", cur._ap, skill.ap, );
+    //console.log("【", skill.type, "】当前ap，技能ap", cur._ap, skill.ap, );
 
     //如果是移动技能
     if (skill.id == -1) {
       let move = skill.move;
-      let moveRange = cur.getMoveRange(this.map);
+      let moveRange = cur.getMoveRange();
 
       //console.log("移动范围", moveRange);
       let nearestEnemy = this.getNearestEnemy(cur);
@@ -230,7 +230,7 @@ export default class AI {
   //获取周围敌人
   getRoundEnemys(cur) {
     let ary = [];
-    let roundPoints = cur.getRoundPoints([cur.x, cur.y], this.map);
+    let roundPoints = cur.getRoundPoints([cur.x, cur.y]);
     //console.log("获取四周坐标：", roundPoints);
     this.peos.forEach(peo => {
       common.indexOf2Array([peo.x, peo.y], roundPoints) !== -1;

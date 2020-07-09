@@ -24,6 +24,7 @@ export default new Vuex.Store({
       state.arrow = game.curSave.arrow;
       state.curNode = game.curSave.curNode;
     },
+    
   },
   actions: {},
   modules: {}

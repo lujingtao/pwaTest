@@ -12,6 +12,9 @@ export default class Map {
   }
   //初始化
   init(option) {
+    this.peos = option.peos;
+    this.elements = option.elements;
+    this.enemys = option.enemys;
     this.$map = option.$map;
     this.$mapDrag = option.$mapDrag;
     this.unitSize = option.unitSize;
@@ -137,17 +140,23 @@ export default class Map {
   }
   
   //更新禁止坐标
-  updateBanPoints(myTeam,enemys,element){
+  updateBanPoints(){
     this.banPoints=[];
-    myTeam.forEach( p=>{
-      this.banPoints.push([p.x,p.y])
-    });
-    enemys.forEach( p=>{
-      this.banPoints.push([p.x,p.y])
-    });
-    element.forEach( p=>{
-      this.banPoints.push([p.x,p.y])
-    });
+    if(this.peos){
+      this.peos.forEach( p=>{
+        this.banPoints.push([p.x,p.y])
+      });
+    }
+    if(this.enemys){
+      this.enemys.forEach( p=>{
+        this.banPoints.push([p.x,p.y])
+      });
+    }
+    if(this.elements){
+      this.elements.forEach( p=>{
+        this.banPoints.push([p.x,p.y])
+      });
+    }
   }
 
   //移动目标位置高亮

@@ -1,6 +1,6 @@
 //获取字段某表指定id项目
-export function getDataItem(key, id){
-  let item = {}; 
+export function getDataItem(key, id) {
+  let item = {};
   let o = data[key].find(e => e.id == id);
   o2o(o, item);
   return item;
@@ -39,7 +39,7 @@ export function createPeo(type) {
   peo.x = 0;
   peo.y = 0;
   peo.buffs = [];
-  peo.skills = [-1,99];//技能，默认添加移动和结束技能
+  peo.skills = [-1, 99]; //技能，默认添加移动和结束技能
   //数据统计相关
   peo.battles = 0;
   peo.kills = 0;
@@ -78,12 +78,6 @@ export function o2o(source, target) {
       } else if (val.indexOf("[") != -1) {
         //数组
         target[k] = eval(val);
-        // val = val.replace("[", "").replace("]", "");
-        // if (val == "") {
-        //   target[k] = [];
-        // } else {
-        //   target[k] = val.split(",");
-        // }
       } else if (val.indexOf("{") != -1) {
         val = val.replace(/'/g, "\"");
         //对象
@@ -100,21 +94,21 @@ export function o2o(source, target) {
 }
 
 //获取人员全部技能（默认增加移动技能和结束技能）
-export function getPeoSkills(peo) {
-  let leftHandSkills = peo._equips.leftHand ? peo._equips.leftHand.skills : [];
-  let rightHandSkills = peo._equips.rightHand ? peo._equips.rightHand.skills : [];
-  let skills = [];
-  let skillsIdAry = leftHandSkills.concat(rightHandSkills);
-  skillsIdAry.unshift("-1");
-  skillsIdAry.push("99");
-  skillsIdAry.forEach(id => {
-    let skill = {};
-    let o = data.skills.find(item => item.id == id);
-    o2o(o, skill);
-    skills.push(skill)
-  });
-  return skills;
-}
+// export function getPeoSkills(peo) {
+//   let leftHandSkills = peo._equips.leftHand ? peo._equips.leftHand.skills : [];
+//   let rightHandSkills = peo._equips.rightHand ? peo._equips.rightHand.skills : [];
+//   let skills = [];
+//   let skillsIdAry = leftHandSkills.concat(rightHandSkills);
+//   skillsIdAry.unshift("-1");
+//   skillsIdAry.push("99");
+//   skillsIdAry.forEach(id => {
+//     let skill = {};
+//     let o = data.skills.find(item => item.id == id);
+//     o2o(o, skill);
+//     skills.push(skill)
+//   });
+//   return skills;
+// }
 
 //获取指定坐标的单位
 export function getPointUnit(p, peos, elements, enemys) {
@@ -131,16 +125,16 @@ export function getPointUnit(p, peos, elements, enemys) {
 }
 
 //获取技能执行范围内，技能类型及单位类型符合的单位数组 cur:执行主体
-export function getTriggerRangeUnits( cur, range, skill, peos, elements, enemys) {
+export function getTriggerRangeUnits(cur, range, skill, peos, elements, enemys) {
   let ary = [];
   range.forEach(point => {
     let unit = getPointUnit(point, peos, elements, enemys);
     if (!unit) return;
-    if ( ( cur._type=="our" && unit._type == "enemy" && skill.class ==1 ) ||
-         ( cur._type=="our" && unit._type == "our" && skill.class == 0 ) || 
-         ( cur._type=="enemy" && unit._type == "our" && skill.class ==1 ) ||
-         ( cur._type=="enemy" && unit._type == "enemy" && skill.class == 0 ) 
-      ) {
+    if ((cur._type == "our" && unit._type == "enemy" && skill.class == 1) ||
+      (cur._type == "our" && unit._type == "our" && skill.class == 0) ||
+      (cur._type == "enemy" && unit._type == "our" && skill.class == 1) ||
+      (cur._type == "enemy" && unit._type == "enemy" && skill.class == 0)
+    ) {
       ary.push(unit)
     }
   })
@@ -148,7 +142,7 @@ export function getTriggerRangeUnits( cur, range, skill, peos, elements, enemys)
 }
 
 //获取技能触发范围 p:指定技能范围一点
-export function getTriggerRange(p, skillRange, map) {
+export function getTriggerRange(p, skillRange, map, cur) {
   let ary = [];
   if (skillRange.type == 1) {
     //触发范围类型：中心点
@@ -156,8 +150,8 @@ export function getTriggerRange(p, skillRange, map) {
   } else if (skillRange.type == 2) {
     //触发范围类型：枚举
     for (let item of skillRange.trigger) {
-      let pRange = getPointRange(p, item, map);
-      if (common.indexOf2Array(p, pRange)) return pRange;
+      let pRange = getPointRange([cur.x, cur.y], item, map);
+      if (common.indexOf2Array([cur.x, cur.y], pRange)) return pRange;
     }
   }
 }

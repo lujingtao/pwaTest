@@ -12,33 +12,26 @@
           <!-- 地图 -->
           <canvas id="map"></canvas>
           <!-- 地图上的元素 -->
-          <section class="elements">
-            <ul>
-              <li v-for="item in elements" :key="item.id" :id="item.id" :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*item.x+'px','top':unitSize*item.y+'px','fontSize':unitSize+'px','lineHeight':unitSize+'px'}">
-                <i :class="['iconfont','icon-map-ele-'+item.type]"></i>
-              </li>
-            </ul>
-          </section>
+          <ul class="elements">
+            <li v-for="item in elements" :key="item.id" :id="item.id" :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*item.x+'px','top':unitSize*item.y+'px','fontSize':unitSize+'px','lineHeight':unitSize+'px'}">
+              <i :class="['iconfont','icon-map-ele-'+item.type]"></i>
+            </li>
+          </ul>
           <!-- 敌人 -->
-          <section class="peos enemys">
-            <ul>
-              <li v-for="peo in enemys" :key="peo.id" :id="peo.id" :class="[curPeo==peo?'active':'', peo._state=='end'?'end':'']"
-                :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px','fontSize':unitSize+'px'}">
-                <Peo :peo="peo"></Peo>
-                <span class="hit" v-if="curPeo && common.indexOf2Array([peo.x,peo.y], curPeo._actionRange) != -1">{{(curPeo._a.hit - peo._a.dod)+"%"}}</span>
-              </li>
-            </ul>
-          </section>
+          <ul class="peos enemys">
+            <li v-for="peo in enemys" :key="peo.id" :id="peo.id" :class="[curPeo==peo?'active':'', peo._state=='end'?'end':'']"
+              :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px','fontSize':unitSize+'px'}">
+              <Peo :peo="peo"></Peo>
+              <span class="hit" v-if="curPeo && common.indexOf2Array([peo.x,peo.y], curPeo._actionRange) != -1">{{(curPeo._a.hit - peo._a.dod)+"%"}}</span>
+            </li>
+          </ul>
           <!-- 我方人员 -->
-          <section class="peos myTeam">
-            <ul>
-              <li v-for="peo in peos" :key="peo.id" :id="peo.id" :class="[curPeo==peo?'active':'', peo._state=='end'?'end':'']"
-                :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px','fontSize':unitSize+'px'}">
-                <Peo :peo="peo"></Peo>
-              </li>
-            </ul>
-          </section>
-
+          <ul class="peos myTeam">
+            <li v-for="peo in peos" :key="peo.id" :id="peo.id" :class="[curPeo==peo?'active':'', peo._state=='end'?'end':'']"
+              :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px','fontSize':unitSize+'px'}">
+              <Peo :peo="peo"></Peo>
+            </li>
+          </ul>
           <!-- 地图覆盖层，用于地图交互 -->
           <section id="mapMask" @touchstart.stop="click_map($event)"></section>
         </div>
@@ -65,7 +58,7 @@
     <FooterNav></FooterNav>
 
     <!-- 透明遮罩层（用于执行行动动画时，页面所有元素不能交互） -->
-    <div class="actionMask" v-show="game.actionTimer"></div>
+    <div id="animateMask"></div>
   </div>
 </template>
 
@@ -118,27 +111,23 @@
 
       //点击技能
       click_skill(skill) {
-        this.curPeo.cancle(this.map);
+        this.curPeo.cancle();
         if (this.curPeo._state == "end" || this.curPeo._ap < skill.ap) return;
         this.curSkill = skill;
         this.curPeo.updateAbility(skill);
         if (skill.id == -1) {
-          this.curPeo.creatMoveRange(this.map);
-        } else if (skill.id == 99) {
-          this.curPeo.doAction(null, this.curSkill, this.map, this.peos, this.enemys, this.elements, () => {
-            this.curSkill = null;
-            if (this.isRoundEnd(this.peos)) {
-              this.nextRound()
-            }
-          })
-        } else {
-          this.curPeo.creatSkillRange(this.map, skill);
+          this.curPeo.creatMoveRange();
+        } else{
+          if(skill.rangeID==0){ //自身使用技能
+            this.curPeo.doAction([this.curPeo.x,this.curPeo.y], this.curSkill, this.actionCallBack)
+          }else{
+            this.curPeo.creatSkillRange(skill);
+          }
         }
       },
 
       //地图点击事件
       click_map(e) {
-        console.log(e);
         //敌方回合点击无效
         if (this.round % 2 == 0) return;
         let point = common.getMapPoint(e, this.unitSize, document.getElementById("mapWrap"));
@@ -152,9 +141,7 @@
             if (common.indexOf2Array(point, this.curPeo._moveRange) != -1) {
               //如果是敌人则无效
               if (this.curPeo._type == "enemy") return;
-              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.enemys, this.elements, () => {
-                this.curSkill = null;
-              })
+              this.curPeo.doAction(point, this.curSkill, this.actionCallBack)
             } else {
               this.checkUnit(unit);
             }
@@ -163,10 +150,7 @@
             if (common.indexOf2Array(point, this.curPeo._actionRange) != -1) {
               //如果是敌人则无效
               if (this.curPeo._type == "enemy") return;
-              this.curPeo.doAction(point, this.curSkill, this.map, this.peos, this.elements, this.enemys, () => {
-                this.curSkill = null;
-                this.checkUnitLive();
-              })
+              this.curPeo.doAction(point, this.curSkill, this.actionCallBack)
             } else {
               this.checkUnit(unit);
             }
@@ -177,12 +161,30 @@
         }
 
       },
-
-      //检查单位存活状态
-      checkUnitLive() {
-        this.removeDieUnit(this.peos);
-        this.removeDieUnit(this.enemys);
-        return this.checkGameOver();
+      
+      //执行动作后的回调事件
+      actionCallBack(){
+        this.curSkill = null;
+        if( !this.isGameOver() ){
+          this.setEnd(this.peos);
+          if (this.isRoundEnd(this.peos)) {
+            this.nextRound()
+          }
+        }
+      },
+      
+      //根据当前Ap情况自动结束自身回合
+      setEnd(ary){
+        ary.forEach(peo=>{
+          let end = true;
+          for (let i = 0; i < peo._skills.length-1; i++) {
+            if( peo._ap>0 && peo._skills[i].ap <= peo._ap){
+              end = false;
+              break;
+            }
+          }
+          peo._state = end?"end":peo._state;
+        })
       },
 
       //删除阵亡单位
@@ -196,7 +198,9 @@
       },
 
       //是否游戏结束
-      checkGameOver() {
+      isGameOver() {
+        this.removeDieUnit(this.peos);
+        this.removeDieUnit(this.enemys);
         if (this.peos.length == 0) {
           this.$dialog.alert({
             message: '战斗结束，我方失败',
@@ -238,7 +242,7 @@
       initPeos() {
         game.curSave.myTeam.forEach(peo => {
           peo.__proto__ = new People;
-          peo.init("our");
+          peo.init("our", this.map, this.peos, this.elements, this.enemys);
           this.peos.push(peo);
         });
         console.log("我方", this.peos);
@@ -273,7 +277,7 @@
           let type = types[common.random(0, types.length - 1)];
           let peo = createPeo(type);
           peo.__proto__ = new People;
-          peo.init("enemy");
+          peo.init("enemy", this.map, this.peos, this.elements, this.enemys);
           this.createEnemyEquips(peo);
           peo.updateAbility();
           this.enemys.push(peo);
@@ -347,6 +351,8 @@
           5); //生成数量
 
         let count = common.random(parseInt(maxCount / 2), maxCount);
+        //调试，count=0
+        count = 0;
 
         for (let i = 0; i < count; i++) {
           let point = common.creatPoint(this.mapSize.xMax, this.mapSize.yMax, this.map.banPoints);
@@ -380,12 +386,16 @@
       //初始化地图
       initMap() {
         let option = {};
+        option.peos = this.peos;
+        option.elements = this.elements;
+        option.enemys = this.enemys;
         option.$map = this.$map;
         let docWidth = document.documentElement.clientWidth;
         this.unitSize = option.unitSize = parseInt(docWidth / this.mapDiv);
         option.cols = Math.round((this.mapSize.xMax + 1) * 1);
         option.rows = Math.round((this.mapSize.yMax + 1) * 1);
         this.map.init(option);
+        
         //this.$mapMask.addEventListener(game.touchStart, this.click_map)
       },
 
@@ -395,7 +405,7 @@
         console.warn("第" + this.round + "回合，" + (this.round % 2 == 0 ? "敌方" : "我方") + "开始");
         if (this.round % 2 == 0) {
           this.resetStatusAndCheckBuffs(this.enemys)
-          this.AI.start(this.enemys[0], this.checkUnitLive, () => {
+          this.AI.start(this.enemys[0], this.isGameOver, () => {
             this.aiEndCallBack(0)
           });
         } else {
@@ -410,7 +420,7 @@
           this.nextRound();
           return;
         }
-        this.AI.start(this.enemys[i], this.checkUnitLive, () => {
+        this.AI.start(this.enemys[i], this.isGameOver, () => {
           this.aiEndCallBack(i)
         });
       },
@@ -437,7 +447,7 @@
       //点击取消按钮
       click_cancle() {
         if (this.curPeo) {
-          this.curPeo.cancle(this.map);
+          this.curPeo.cancle();
           this.curPeo = null;
         }
         this.curSkill = null;
@@ -446,15 +456,15 @@
 
       //点击结束回合按钮
       click_end() {
+        this.peos.forEach(peo=>{
+          peo.action_end()
+        })
         this.click_cancle();
         this.nextRound();
       },
 
     },
     beforeDestroy() {
-      clearTimeout(game.actionTimer);
-      game.actionTimer = null;
-      //this.$mapMask.removeEventListener(game.touchStart, this.click_map)
     }
   }
 </script>
@@ -511,7 +521,7 @@
     }
 
     .elements {
-      >ul>li {
+      >li {
         position: absolute;
 
         .iconfont {
@@ -522,10 +532,11 @@
     }
 
     .peos {
-      >ul>li {
+      >li {
         display: inline-block;
         position: absolute;
-        transition: 1s;
+        opacity:1;
+        transform:rotate(0deg) scale(1,1);
 
         .name {
           display: none;
@@ -537,9 +548,6 @@
       }
 
       .active {
-        // &::after{
-        //   po
-        // }
         background: #f60;
       }
 
@@ -652,13 +660,15 @@
       }
     }
 
-    .actionMask {
+    #animateMask {
+      display: none;
       z-index: 99;
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
+      background: rgba(0,0,0,0);
     }
   }
 </style>

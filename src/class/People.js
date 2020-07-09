@@ -1,15 +1,19 @@
 //人类
 import { getDataItem, getPointRange, getTriggerRangeUnits, getTriggerRange } from "@/class/Tool.js";
+import Animate from "@/class/Animate.js";
+let animate = new Animate;
 export default class People {
   constructor() {}
 
-  init(type) {
+  init(type, map, peos, elements, enemys) {
     //非存储数据
     this._type = type; //类型 peo\enemy\element
+    this._map = map;
+    this._peos = peos;
+    this._elements = elements;
+    this._enemys = enemys;
     this._ap = 6; //行动点数
     this._state = "waiting"; //当前人员状态，waiting\moveRange\actionRange\moving\attacking
-    this._animate = ""; //动画状态，用于执行动画，例如 attacked
-    this._animateDes = ""; //动画描述，例如被攻击attacked时，显示miss等文字
     this._moveRange = []; //移动范围
     this._actionRange = []; //行动范围
     this._a = {}; //装备、buff等加成后的能力
@@ -32,6 +36,7 @@ export default class People {
   //初始化能力
   initAbility() {
     //this._a.maxHp;
+    this._a.move = 0; //移动
     this._a.atk = 0; //攻击
     this._a.hit = 0; //命中
     this._a.dod = 0; //闪避
@@ -48,48 +53,69 @@ export default class People {
 
 
   //执行操作
-  doAction(point, skill, map, peos, elements, enemys, callBack) {
-    console.log(this.name, this, "对目标", point, "执行", skill);
+  doAction(point, skill, callBack) {
+    console.log("【" + this.name + "】", this, "对目标", point, "执行", "【" + skill.type + "】", skill);
     if (this._ap < skill.ap) {
       console.log("ap不足");
       return;
     }
     let units = [];
-    if (skill.id == -1 || skill.id == 99) {
-      this.doOneAction(point, null, skill, map, peos, elements, enemys);
-      this._ap = this._ap - skill.ap;
-    } else {
+
+    if (skill.id == -1 || skill.id == 99) { //如果是移动或结束
+      animate.start(this, point, skill, this._map, () => {
+        this._ap = this._ap - skill.ap;
+        this.doOneAction(point, null, skill);
+        this.animateCallBack(callBack);
+      })
+    } else { //其它技能
       let skillRange = getDataItem("skillRange", skill.rangeID); //范围对象
-      let triggerRange = getTriggerRange(point, skillRange, map);
+      let triggerRange = getTriggerRange(point, skillRange, this._map, this);
       console.log("技能执行范围：", triggerRange);
-      units = getTriggerRangeUnits(this, triggerRange, skill, peos, elements, enemys);
+      units = getTriggerRangeUnits(this, triggerRange, skill, this._peos, this._elements, this._enemys);
       console.log("技能执行范围内能实施的单位数组：", units);
       if (units.length == 0) return;
-      units.forEach(unit => {
-        this.doOneAction(point, unit, skill, map, peos, elements, enemys)
+      animate.start(this, point, skill, this._map, () => {
+        this._ap = this._ap - skill.ap;
+        units.forEach((unit,index) => {
+          let attackResult = this.doOneAction(point, unit, skill);
+          if(attackResult){
+            animate.attacked(this, unit, this._map, attackResult, ()=>{ //最后一个目标执行完动画后再对整个动画回调
+              if( index == units.length-1){
+                this.animateCallBack(callBack);
+              }
+            })
+          }else{
+            this.animateCallBack(callBack);
+          }
+        })
       })
-      this._ap = this._ap - skill.ap;
     }
-    map.clearActionCell();
-    game.actionTimer = setTimeout(() => {
-      this.cancle(map);
-      units.forEach(unit => {
-        unit._animate = "";
-        unit._animateDes = "";
-      });
-      game.actionTimer = null;
-      if (callBack) callBack();
-    }, 1000)
+    this._map.clearActionCell();
+  }
+  
+  //动画结束后回调
+  animateCallBack(callBack){
+    this.cancle();
+    let $animateMask = document.getElementById("animateMask");
+    $animateMask.style.display = "none";
+    if (callBack) callBack();
   }
 
   //执行单个操作
-  doOneAction(point, unit, skill, map, peos, elements, enemys) {
+  doOneAction(point, unit, skill) {
     switch (skill.id) {
       case -1: //移动
-        this.action_moveTo(point, map, peos, elements, enemys);
+        this.action_moveTo(point)
         break;
       case 99: //待机
         this.action_end();
+        break;
+      case 18: //下盾
+        skill.buffs.forEach(id => {
+          this.removeBuff(id)
+        });
+        this.removeSkill(18);
+        this.addSkill(17)
         break;
       case 17: //架盾
         skill.buffs.forEach(id => {
@@ -98,57 +124,62 @@ export default class People {
         this.removeSkill(17);
         this.addSkill(18)
         break;
-      case 18: //下盾
-        this.removeBuff(0)
-        this.removeSkill(18);
-        this.addSkill(17)
-        break;
-      case 6: //推击
-        this.action_push(unit, map, peos, elements, enemys);
+      case 13: //旋风斩
+        return this.action_attack(unit);
         break;
       case 9: //钩击
-        this.action_pull(unit, map, peos, elements, enemys);
+        this.action_pull(unit);
+        break;
+      case 6: //推击
+        this.action_push(unit);
         break;
       default: //攻击
-        this.action_attack(unit, map, peos, elements, enemys);
+        return this.action_attack(unit);
         break;
     }
   }
 
   //钩击
-  action_pull(unit, map, peos, elements, enemys) {
+  action_pull(unit) {
     //相对于目标的中间坐标，公式为 x = (x2 + x1)/2; y = (y2 + y1)/2
     var x = (this.x + unit.x) / 2;
     var y = (this.y + unit.y) / 2;
     //如果中间坐标是障碍物，则目标眩晕1回合
-    if (common.indexOf2Array([x, y], map.banPoints) != -1) {
+    if (common.indexOf2Array([x, y], this._map.banPoints) != -1) {
       unit.addBuff(1);
     } else {
       unit.x = x;
       unit.y = y;
-      map.updateBanPoints(peos, elements, enemys);
+      this._map.updateBanPoints();
     }
   }
 
   //推击
-  action_push(unit, map, peos, elements, enemys) {
+  action_push(unit) {
     //相对于目标的后一格坐标，公式为 x = 2 * x2 - x1; y = 2 * y2 - y1
     var x = unit.x * 2 - this.x;
     var y = unit.y * 2 - this.y;
     //如果坐标超过地图边界或者坐标是障碍物，则目标眩晕1回合
-    if (x < 0 || x > map.cols || y < 0 || y > map.rows || common.indexOf2Array([x, y], map.banPoints) != -1) {
+    if (x < 0 || x > this._map.cols || y < 0 || y > this._map.rows || common.indexOf2Array([x, y], this._map.banPoints) !=
+      -1) {
       unit.addBuff(1);
     } else {
       unit.x = x;
       unit.y = y;
-      map.updateBanPoints(peos, elements, enemys);
+      this._map.updateBanPoints();
     }
   }
 
-  //攻击
-  action_attack(unit, map, peos, elements, enemys) {
-    //this._animate = "attacking";
-    unit._animate = "attacked";
+  /*
+    攻击
+    返回计算结果，用于执行动画{ type: 0, position: "head\body\rightHand", damage: 0, equipDamage: 0 }
+    type 0:miss  1:伤害  2:死亡
+  */
+  action_attack(unit) {
+    //如果目标处于架盾状态，则只能攻击盾牌
+    if (unit.buffs.indexOf(0) != -1) {
+      return this.attackAccount(unit, "rightHand");
+    }
 
     //计算命中率
     let hit = this._a.hit - unit._a.dod;
@@ -157,8 +188,7 @@ export default class People {
     let isHit = hitRandom <= hit;
     console.log(`【${this.name}】攻击【${unit.name}】,【${hit},${hitRandom}】,${isHit?'命中':'miss'}`);
     if (!isHit) {
-      unit._animateDes = "MISS";
-      return
+      return { type: 0, position: "", damage: 0, equipDamage: 0 }
     };
 
     //计算爆头率
@@ -166,21 +196,25 @@ export default class People {
     hh = hh > 100 ? 100 : hh;
     let hhRandom = common.random(1, 100);
     let isHh = hhRandom <= hh;
-    this.attackAccount(unit, map, peos, elements, enemys, isHh ? 'head' : 'body');
+    return this.attackAccount(unit, isHh ? 'head' : 'body');
   }
 
   //攻击结算
-  attackAccount(unit, map, peos, elements, enemys, position) {
+  attackAccount(unit, position) {
     let leftHand = this._equips["leftHand"];
     let equip = unit._equips[position];
     let damage = 0;
     let equipDamage = 0;
     let weight = position == "head" ? 1.5 : 1;
     if (leftHand) { //攻击方有武器
-      let pa = equip ? this._a.pa : 100;
-      pa = pa > 100 ? 100 : pa;
-      damage = this._a.atk * this._a.pa * weight / 100;
-      equipDamage = equip ? this._a.atk * this._a.ba / 100 : 0;
+      if (position == "rightHand") { //如果攻击盾牌
+        equipDamage = this._a.atk * this._a.ba / 100;
+      } else {
+        let pa = equip ? this._a.pa : 100;
+        pa = pa > 100 ? 100 : pa;
+        damage = this._a.atk * this._a.pa * weight / 100;
+        equipDamage = equip ? this._a.atk * this._a.ba / 100 : 0;
+      }
     } else { //攻击方无武器
       damage = 1 * weight;
       equipDamage = equip ? 2 : 0;
@@ -192,25 +226,13 @@ export default class People {
       equip.dur -= equipDamage;
       equip.dur = equip.dur < 0 ? 0 : equip.dur;
     }
-    unit._animateDes = `-${damage}${position=='head'?'！':''}`;
     console.log(`命中【${position}】，hp：-${damage}，装备：-${equipDamage}`);
     if (unit.hp <= 0) {
       console.log("【" + this.name + "】", this, "击杀了", "【" + unit.name + "】",
         unit);
     }
-    //this.checkDie(unit, map, peos, elements, enemys);
+    return { type: unit.hp <= 0 ? 2 : 1, position: position, damage: damage, equipDamage: equipDamage }
   }
-
-  //是否死亡
-  // checkDie(unit, map, peos, elements, enemys) {
-  //   unit = unit == undefined ? this : unit;
-  //   if (unit.hp <= 0) {
-  //     let ary = unit._type == "our" ? peos : enemys;
-  //     let index = ary.findIndex(item => item.id == unit.id);
-  //     ary.splice(index, 1);
-  //     map.updateBanPoints(peos, elements, enemys);
-  //   }
-  // }
 
   //结束
   action_end() {
@@ -218,11 +240,11 @@ export default class People {
   }
 
   //移动
-  action_moveTo(point, map, peos, elements, enemys) {
+  action_moveTo(point) {
     this._state = "moving";
     this.x = point[0];
     this.y = point[1];
-    map.updateBanPoints(peos, elements, enemys);
+    this._map.updateBanPoints();
   }
 
   //初始化技能对象数组
@@ -269,7 +291,7 @@ export default class People {
     let equip = this._equips[type];
     if (equip) {
       equip.skills.forEach(id => {
-        this.removeSkill(id)
+        this.removeSkill(id, true)
       })
     }
     this.equip[type] = "";
@@ -290,9 +312,9 @@ export default class People {
   }
 
   //卸载技能
-  removeSkill(id) {
+  removeSkill(id, isRemoveEquip) {
     let skill = this._skills.find(skill => skill.id == id);
-    if (skill && skill.active == 0) { //被动技能自动删除buff
+    if (skill && (isRemoveEquip || skill.active == 0)) { //被动技能 或者 卸载装备 情况下自动删除buff
       skill.buffs.forEach(id => {
         this.removeBuff(id)
       })
@@ -351,9 +373,13 @@ export default class People {
   //删除表里某一项
   removeItem(type, id) {
     let index = this[type].indexOf(id);
-    this[type].splice(index, 1);
+    if (index != -1) {
+      this[type].splice(index, 1);
+    }
     let _index = this["_" + type].findIndex(item => item.id == id);
-    this["_" + type].splice(_index, 1);
+    if (_index != -1) {
+      this["_" + type].splice(_index, 1);
+    }
   }
 
   //更新能力值
@@ -409,28 +435,28 @@ export default class People {
   }
 
   //获取周围四个点的值
-  getRoundPoints(p, map) {
+  getRoundPoints(p) {
     var x = p[0],
       y = p[1];
     var r = [];
     if (y - 1 >= 0) { r.push([x, y - 1]) }
     if (x - 1 >= 0) { r.push([x - 1, y]) }
-    if (x + 1 < map.cols) { r.push([x + 1, y]) }
-    if (y + 1 < map.rows) { r.push([x, y + 1]) }
+    if (x + 1 < this._map.cols) { r.push([x + 1, y]) }
+    if (y + 1 < this._map.rows) { r.push([x, y + 1]) }
     return r
   }
 
   //获取可移动范围
-  getMoveRange(map) {
+  getMoveRange() {
     let _this = this;
     var openAry = [];
     //开始
     var go = function(point, moveSize) {
-      var roundPoints = _this.getRoundPoints(point, map);
+      var roundPoints = _this.getRoundPoints(point);
       for (let i = 0; i < roundPoints.length; i++) {
         var _moveSize = moveSize;
         var p = roundPoints[i];
-        if (common.indexOf2Array(p, map.banPoints) == -1) {
+        if (common.indexOf2Array(p, _this._map.banPoints) == -1) {
           _moveSize--;
           if (common.indexOf2Array(p, openAry) == -1) {
             openAry.push(p);
@@ -441,26 +467,27 @@ export default class People {
         }
       }
     }
-    go([this.x, this.y], this.move);
+    go([this.x, this.y], this._a.move);
+    go = null;
     return openAry;
   }
 
   //生成通用技能范围
-  creatSkillRange(map, skill) {
+  creatSkillRange(skill) {
     this._state = "actionRange";
     let skillRange = getDataItem("skillRange", skill.rangeID); //范围对象
-    let effectiveRange = getPointRange([this.x, this.y], skillRange.effective, map);
+    let effectiveRange = getPointRange([this.x, this.y], skillRange.effective, this._map);
     this._actionRange = effectiveRange;
-    map.drawActionCell(this._actionRange, "skillRange");
-    // let triggerRange = getTriggerRange(point, skillRange, map);
+    this._map.drawActionCell(this._actionRange, "skillRange");
+    // let triggerRange = getTriggerRange(point, skillRange, this._map);
     // console.log("技能执行范围：", triggerRange);
   }
 
   //生成移动范围
-  creatMoveRange(map) {
+  creatMoveRange() {
     this._state = "moveRange";
-    this._moveRange = this.getMoveRange(map);
-    map.drawActionCell(this._moveRange, "moveRange");
+    this._moveRange = this.getMoveRange();
+    this._map.drawActionCell(this._moveRange, "moveRange");
   }
 
   //重置ap和状态
@@ -470,12 +497,10 @@ export default class People {
   }
 
   //取消选择（清除移动范围和攻击范围）
-  cancle(map) {
+  cancle() {
     this._state = this._state == "end" ? "end" : "waiting";
-    this._animate = "";
-    this._animateDes = "";
     this.updateAbility();
-    map.clearActionCell();
+    this._map.clearActionCell();
     this._moveRange = [];
     this._actionRange = [];
   }
