@@ -30,9 +30,9 @@
         <div class="icon"></div>
         <ul>
           <li v-for="val in compare" :class="setCompareColor(val)">
-          <span v-if="val>0">+{{val}}</span>
-          <span v-else-if="val==0">-</span>
-          <span v-else>{{val}}</span>
+            <span v-if="val>0">+{{val}}</span>
+            <span v-else-if="val==0">-</span>
+            <span v-else>{{val}}</span>
           </li>
         </ul>
       </dd>
@@ -40,12 +40,13 @@
 
     <section class="items">
       <van-grid :column-num="4" :gutter="10">
-        <van-grid-item v-for="item in items" :key="item.id" :id="'item_'+item.id" @touchend.native.prevent.stop="clickItem(item)" :class="[targetItem&&targetItem.id==item.id?'active':'']">
+        <van-grid-item v-for="item in items" :key="item.id" :id="'item_'+item.id" @touchend.native.prevent.stop="clickItem(item)"
+          :class="[targetItem&&targetItem.id==item.id?'active':'']">
           <i :class="['iconfont','icon-'+item.type+'-'+item.qua]"></i>
           <span class="van-grid-item__text">{{item.name}}</span>
           <i class="price">${{item.price}}</i>
           <van-button type="primary" @touchend.native.prevent.stop="confirmItem(item)">装备</van-button>
-          
+
         </van-grid-item>
       </van-grid>
     </section>
@@ -58,6 +59,7 @@
 
 <script>
   import EquipInfo from "./EquipInfo";
+  import { peoSave } from "@/class/Tool.js";
   export default {
     props: ['peo', 'equip', 'equipKey'],
     data() {
@@ -65,24 +67,24 @@
         curItem: null, //当前装备
         targetItem: null, //选择目标装备
         items: [],
-        compare:{
-          type:undefined,
-          price:undefined,
-          qua:undefined,
-          dur:undefined,
-          wei:undefined,
-          atk:undefined,
-          th:undefined,
-          bh:undefined,
-          ba:undefined,
-          pa:undefined,
-          bs:undefined,
-          hit:undefined,
-          hh:undefined,
-          range:undefined,
-          effect:undefined,
-          skill:undefined,
-          des:undefined,
+        compare: {
+          type: undefined,
+          price: undefined,
+          qua: undefined,
+          dur: undefined,
+          wei: undefined,
+          atk: undefined,
+          th: undefined,
+          bh: undefined,
+          ba: undefined,
+          pa: undefined,
+          bs: undefined,
+          hit: undefined,
+          hh: undefined,
+          range: undefined,
+          effect: undefined,
+          skill: undefined,
+          des: undefined,
         },
       }
     },
@@ -103,51 +105,52 @@
             return item
           }
         });
-        this.items.sort((a,b)=> { return b.type - a.type })
+        this.items.sort((a, b) => { return b.type - a.type })
       },
-      
+
       //是否队员已装备该物品
-      isPeoHasEquip(item){
+      isPeoHasEquip(item) {
         for (var i = 0; i < game.curSave.myTeam.length; i++) {
           let peo = game.curSave.myTeam[i];
-          if(peo.equip[this.equipKey] == item.id) return true;
+          if (peo.equip[this.equipKey] == item.id) return true;
         }
         return false;
       },
 
       //点击装备物品
       clickItem(item) {
-        if(this.curItem == item) return;
+        if (this.curItem == item) return;
         this.targetItem = item;
         this.updateCompare()
       },
-      
+
       //更新对比属性
-      updateCompare(){
+      updateCompare() {
         for (let key in this.compare) {
-          if(['type','price','th','effect','skill','des'].indexOf(key)==-1){
-            this.compare[key] = this.targetItem[key] - (this.curItem?this.curItem[key]:0);
-            if(['bh','ba','pa','bs','hit','hh'].indexOf(key)!=-1){
+          if (['type', 'price', 'th', 'effect', 'skill', 'des'].indexOf(key) == -1) {
+            this.compare[key] = this.targetItem[key] - (this.curItem ? this.curItem[key] : 0);
+            if (['bh', 'ba', 'pa', 'bs', 'hit', 'hh'].indexOf(key) != -1) {
               this.compare[key] = this.compare[key];
             }
           }
         }
       },
-      
+
       //设置对比颜色风格
-      setCompareColor(val){
-        if(val==undefined) return;
-        if(val>0) return 'green';
-        if(val<0) return 'red';
+      setCompareColor(val) {
+        if (val == undefined) return;
+        if (val > 0) return 'green';
+        if (val < 0) return 'red';
       },
-      
+
       //确认装备物品
-      confirmItem(item){
+      confirmItem(item) {
         this.peo.switchEquip(this.equipKey, this.curItem, this.targetItem);
         this.click_cancle();
       },
 
       click_cancle() {
+        peoSave(this.peo);
         this.$emit("SwitchEquip_hide")
       }
     },
@@ -170,12 +173,12 @@
 
     dl {
       position: absolute;
-      left:0;
-      top:0;
+      left: 0;
+      top: 0;
       right: 0;
-      margin:0;
-      bottom:245px;
-      overflow-y:auto;
+      margin: 0;
+      bottom: 245px;
+      overflow-y: auto;
       display: flex;
     }
 
@@ -185,25 +188,30 @@
       border-right: 1px solid #444;
       line-height: 2;
       width: 25%;
-      &:first-child{
+
+      &:first-child {
         width: 60px;
       }
+
       &:last-child {
         width: 60px;
         border-right: 0;
       }
-      
-      li{
+
+      li {
         min-height: 24px;
         background: #3e3e3e;
       }
-      li:nth-child(2n){
-        background: rgba(0,0,0,0);
+
+      li:nth-child(2n) {
+        background: rgba(0, 0, 0, 0);
       }
-      li.green{
+
+      li.green {
         color: #55A532;
       }
-      li.red{
+
+      li.red {
         color: #ff5d5d;
       }
 
@@ -216,15 +224,15 @@
         text-align: center;
         border-radius: 5px;
         color: #888;
-        border: 1px solid rgba(0,0,0,0);
+        border: 1px solid rgba(0, 0, 0, 0);
 
         span {
           font-size: 16px;
         }
-        
-        .iconfont{
+
+        .iconfont {
           font-size: 30px;
-          color:#fff
+          color: #fff
         }
       }
 
@@ -241,12 +249,12 @@
       background: #404040;
       border-top: 1px solid #777;
       border-bottom: 1px solid #777;
-      
-      .van-button{
+
+      .van-button {
         display: none;
       }
-      
-      .active .van-button{
+
+      .active .van-button {
         display: block;
       }
     }

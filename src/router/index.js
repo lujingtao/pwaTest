@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home/Home.vue'
 import Battle from '../views/Battle/Battle.vue'
+import BattleEnd from '../views/Battle/BattleEnd.vue'
 import Team from '../views/Team/Team.vue'
 import Option_Save from '../views/Option/Save.vue'
 import Option_Load from '../views/Option/Load.vue'
@@ -31,6 +32,11 @@ const routes = [{
     path: '/Battle',
     meta: { title: 'Battle' },
     component: Battle
+  },
+  {
+    path: '/BattleEnd',
+    meta: { title: 'BattleEnd' },
+    component: BattleEnd
   },
   {
     path: '/Option/Save',

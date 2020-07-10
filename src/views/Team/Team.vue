@@ -9,25 +9,25 @@
         </tr>
         <tr>
           <td class="label">攻击：</td>
-          <td>{{peo._a.atk}}</td>
+          <td>{{peo.atk}}</td>
           <td class="label">命中：</td>
-          <td>{{peo._a.hit}}%</td>
+          <td>{{peo.hit}}%</td>
           <td class="label">闪避：</td>
-          <td>{{peo._a.dod}}%</td>
+          <td>{{peo.dod}}%</td>
         </tr>
         <tr>
           <td class="label">反击：</td>
-          <td>{{peo._a.atkb}}%</td>
+          <td>{{peo.atkb}}%</td>
           <td class="label">先手反击：</td>
-          <td>{{peo._a.fatkb}}%</td>
+          <td>{{peo.fatkb}}%</td>
           <td class="label">暴头：</td>
-          <td>{{peo._a.hh}}%</td>
+          <td>{{peo.hh}}%</td>
         </tr>
         <tr>
           <td class="label">被暴头：</td>
-          <td>{{peo._a.hhb}}%</td>
+          <td>{{peo.hhb}}%</td>
           <td class="label">士气：</td>
-          <td>{{peo._a.mor}}</td>
+          <td>{{peo.mor}}</td>
         </tr>
       </table>
       <table class="attrTable">
@@ -108,7 +108,7 @@
           <td class="label">场均闪避：</td>
           <td>{{peo.battles==0?0:(peo.dodges/peo.battles).toFixed(2)}}</td>
           <td class="label">场均暴击：</td>
-          <td>{{peo.battles==0?0:(peo.crits/peo.battles).toFixed(2)}}</td>
+          <td>{{peo.battles==0?0:(peo.hhs/peo.battles).toFixed(2)}}</td>
         </tr>
       </table>
     </section>
@@ -148,17 +148,17 @@
     },
 
     created() {
-      let peos = game.curSave.myTeam;
-      if (peos.length == 0) {
+      if (game.curSave.myTeam.length == 0) {
         this.$toast.fail('请先招募队员');
         return;
       }
-      peos.forEach(peo=>{
-        peo.__proto__ = new People;
-        peo.init();
+      game.curSave.myTeam.forEach(peo=>{
+        let peoClone = JSON.parse(JSON.stringify(peo));
+        peoClone.__proto__ = new People;
+        peoClone.init("our");
+        this.peos.push(peoClone);
       });
-      this.peos = peos;
-      this.peo = peos[0];
+      this.peo = this.peos[0];
       this.click_peo(this.peo)
     },
     mounted() {},

@@ -69,7 +69,7 @@ export default class AI {
       let effectiveRange = getPointRange([cur.x, cur.y], skillRange.effective, this.map);
       //console.log("技能有效范围：", effectiveRange)
       effectiveRange.forEach(p => {
-        let triggerRange = getTriggerRange(p, skillRange, this.map);
+        let triggerRange = getTriggerRange(p, skillRange, this.map, cur);
         //console.log("技能执行范围：", triggerRange);
         let units = getTriggerRangeUnits( cur, triggerRange, skill, this.peos, this.elements, this.enemys );
         //console.log("技能执行范围内能实施的单位数组：", units);
@@ -144,7 +144,7 @@ export default class AI {
   //预算单个头部/身体伤害
   getOnePaDamage(cur, unit, skill, type) {
     let damge = 0;
-    let atk = cur._a.atk;
+    let atk = cur.atk;
     //目标没有传盔甲则穿甲率为100
     let pa = unit._equips[type] ? cur._equips.leftHand.pa : 100;
     //技能对穿甲加成
@@ -153,11 +153,11 @@ export default class AI {
     //技能攻击加成
     atk = skill.effect.atk ? atk + skill.effect.atk : atk;
     //技能命中加成
-    let hit = cur._a.hit - unit._a.dod;
+    let hit = cur.hit - unit.dod;
     hit = (skill.effect.hit ? hit + skill.effect.hit : hit) / 100;
     hit = hit > 1 ? 1 : hit;
     //技能爆头加成
-    let hh = cur._a.hh - unit._a.hhb;
+    let hh = cur.hh - unit.hhb;
     hh = (skill.effect.hh ? hh + skill.effect.hh : hh) / 100;
     hh = hh > 1 ? 1 : hh;
 

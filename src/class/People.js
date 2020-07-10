@@ -16,7 +16,12 @@ export default class People {
     this._state = "waiting"; //当前人员状态，waiting\moveRange\actionRange\moving\attacking
     this._moveRange = []; //移动范围
     this._actionRange = []; //行动范围
-    this._a = {}; //装备、buff等加成后的能力
+    this._damages = 0; //单场伤害，统计相关
+    this._dodges = 0; //单场闪避，
+    this._hits = 0; //单场命中，
+    this._hhs = 0; //单场暴击，
+    this._kills = 0; //单场击杀，
+    this._exp = 0; //单场经验，
     this.initAbility();
     this._buffs = []; //存储buff对象数组
     this.initBuffs_(); //初始化buff对象数组
@@ -35,20 +40,30 @@ export default class People {
 
   //初始化能力
   initAbility() {
-    //this._a.maxHp;
-    this._a.move = 0; //移动
-    this._a.atk = 0; //攻击
-    this._a.hit = 0; //命中
-    this._a.dod = 0; //闪避
-    this._a.atkb = 0; //反击
-    this._a.fatkb = 0; //先手反击
-    this._a.hh = 0; //爆头率
-    this._a.hhb = 0; //被爆头率
-    this._a.mor = 0; //士气
-    this._a.bh = 0; // 破马
-    this._a.ba = 0; //破甲
-    this._a.pa = 0; //穿甲
-    this._a.bs = 0; //破盾
+    let ary = this._type == "our" ? game.curSave.myTeam : game.battleTempEnemys;
+    let unit = ary.find(unit => unit.id == this.id);
+
+    this.hpMax = unit.hpMax;
+    this.pow = unit.pow;
+    this.agi = unit.agi;
+    this.skill = unit.skill;
+    this.luck = unit.luck;
+    this.will = unit.will;
+    this.endu = unit.endu;
+    this.move = unit.move;
+
+    this.atk = 0; //攻击
+    this.hit = 0; //命中
+    this.dod = 0; //闪避
+    this.atkb = 0; //反击
+    this.fatkb = 0; //先手反击
+    this.hh = 0; //爆头率
+    this.hhb = 0; //被爆头率
+    this.mor = 0; //士气
+    this.bh = 0; // 破马
+    this.ba = 0; //破甲
+    this.pa = 0; //穿甲
+    this.bs = 0; //破盾
   }
 
 
@@ -76,15 +91,15 @@ export default class People {
       if (units.length == 0) return;
       animate.start(this, point, skill, this._map, () => {
         this._ap = this._ap - skill.ap;
-        units.forEach((unit,index) => {
+        units.forEach((unit, index) => {
           let attackResult = this.doOneAction(point, unit, skill);
-          if(attackResult){
-            animate.attacked(this, unit, this._map, attackResult, ()=>{ //最后一个目标执行完动画后再对整个动画回调
-              if( index == units.length-1){
+          if (attackResult) {
+            animate.attacked(this, unit, this._map, attackResult, () => { //最后一个目标执行完动画后再对整个动画回调
+              if (index == units.length - 1) {
                 this.animateCallBack(callBack);
               }
             })
-          }else{
+          } else {
             this.animateCallBack(callBack);
           }
         })
@@ -92,9 +107,9 @@ export default class People {
     }
     this._map.clearActionCell();
   }
-  
+
   //动画结束后回调
-  animateCallBack(callBack){
+  animateCallBack(callBack) {
     this.cancle();
     let $animateMask = document.getElementById("animateMask");
     $animateMask.style.display = "none";
@@ -182,17 +197,18 @@ export default class People {
     }
 
     //计算命中率
-    let hit = this._a.hit - unit._a.dod;
+    let hit = this.hit - unit.dod;
     hit = hit > 100 ? 100 : hit;
     let hitRandom = common.random(1, 100);
     let isHit = hitRandom <= hit;
     console.log(`【${this.name}】攻击【${unit.name}】,【${hit},${hitRandom}】,${isHit?'命中':'miss'}`);
     if (!isHit) {
+      unit._dodges++;
       return { type: 0, position: "", damage: 0, equipDamage: 0 }
     };
 
     //计算爆头率
-    let hh = this._a.hh + unit._a.hhb;
+    let hh = this.hh + unit.hhb;
     hh = hh > 100 ? 100 : hh;
     let hhRandom = common.random(1, 100);
     let isHh = hhRandom <= hh;
@@ -208,12 +224,12 @@ export default class People {
     let weight = position == "head" ? 1.5 : 1;
     if (leftHand) { //攻击方有武器
       if (position == "rightHand") { //如果攻击盾牌
-        equipDamage = this._a.atk * this._a.ba / 100;
+        equipDamage = this.atk * this.ba / 100;
       } else {
-        let pa = equip ? this._a.pa : 100;
+        let pa = equip ? this.pa : 100;
         pa = pa > 100 ? 100 : pa;
-        damage = this._a.atk * this._a.pa * weight / 100;
-        equipDamage = equip ? this._a.atk * this._a.ba / 100 : 0;
+        damage = this.atk * this.pa * weight / 100;
+        equipDamage = equip ? this.atk * this.ba / 100 : 0;
       }
     } else { //攻击方无武器
       damage = 1 * weight;
@@ -222,6 +238,7 @@ export default class People {
     damage = Math.round(damage);
     equipDamage = Math.round(equipDamage);
     unit.hp -= damage;
+    unit.hp = unit.hp < 0 ? 0 : unit.hp;
     if (equip) {
       equip.dur -= equipDamage;
       equip.dur = equip.dur < 0 ? 0 : equip.dur;
@@ -231,6 +248,11 @@ export default class People {
       console.log("【" + this.name + "】", this, "击杀了", "【" + unit.name + "】",
         unit);
     }
+
+    this._hits++;
+    this._damages = this._damages + damage + equipDamage;
+    this._hhs = this._hhs + (position == "head" ? 1 : 0);
+    this._kills = this.kills + (unit.hp <= 0 ? 1 : 0)
     return { type: unit.hp <= 0 ? 2 : 1, position: position, damage: damage, equipDamage: equipDamage }
   }
 
@@ -385,13 +407,13 @@ export default class People {
   //更新能力值
   updateAbility(skill) {
     this.initAbility();
-    this.setAbility(this); //身体
+    //this.setAbility(this); //身体
 
     for (let key in this._equips) { //所有装备属性及附带效果
       let equip = this._equips[key];
       if (!equip) continue;
       if (key == "leftHand") {
-        this.setAbility(equip); //主手装备属性
+        this.setAbility(equip, "leftHand"); //主手装备属性
       }
       this.setAbility(equip.effect); //装备附带效果
     }
@@ -403,41 +425,37 @@ export default class People {
     });
     this._skills.sort((a, b) => a.id - b.id);
     this._buffs.sort((a, b) => a.id - b.id);
-    this._a.hit += 80; //基础命中80
-    this._a.mor += 100; //基础士气100
+    this.atk += this.pow;
+    this.hit += this.agi;
+    this.dod += this.agi;
+    this.atkb += this.skill;
+    this.fatkb += Math.round(this.skill / 2);
+    this.mor += this.will;
+    this.hit += 80; //基础命中80
+    this.mor += 100; //基础士气100
   }
 
-  setAbility(obj) {
-    for (let key in obj) {
-      switch (key) {
-        case "pow":
-          this._a.atk += obj[key];
-          break;
-        case "agi":
-          this._a.hit += obj[key];
-          this._a.dod += obj[key];
-          break;
-        case "skill":
-          this._a.atkb += obj[key];
-          this._a.fatkb += Math.round(obj[key] / 2);
-          break;
-        case "luck":
-          this._a.hh += obj[key];
-          this._a.hhb -= obj[key];
-          break;
-        case "will":
-          this._a.mor += obj[key];
-          break;
+  setAbility(obj, type) {
+    if (type == "leftHand") {
+      this.atk = obj.atk;
+      this.bh = obj.bh;
+      this.ba = obj.ba;
+      this.pa = obj.pa;
+      this.bs = obj.bs;
+      this.hit = obj.hit;
+      this.hh = obj.hh;
+    } else {
+      for (let key in obj) {
+        if (this[key] == undefined) continue; //位置不能置前
+        this[key] += obj[key];
       }
-      if (this._a[key] == undefined) continue; //位置不能置前
-      this._a[key] += obj[key];
     }
   }
 
   //获取周围四个点的值
   getRoundPoints(p) {
-    var x = p[0],
-      y = p[1];
+    var x = p[0];
+    var y = p[1];
     var r = [];
     if (y - 1 >= 0) { r.push([x, y - 1]) }
     if (x - 1 >= 0) { r.push([x - 1, y]) }
@@ -467,7 +485,7 @@ export default class People {
         }
       }
     }
-    go([this.x, this.y], this._a.move);
+    go([this.x, this.y], this.move);
     go = null;
     return openAry;
   }

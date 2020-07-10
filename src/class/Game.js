@@ -10,8 +10,7 @@ export default class Game {
     this.curSave = null; //当前存档内容
     this.peosUpdateCount = 8; //人员刷新数量
     this.goodsUpdateCount = 20; //商品刷新数量
-    this.animateTimer = null; //战斗场景人物动画计时器
-    this.animateDuration = 0;  //战斗场景人物动画时长
+    this.battleTempEnemys = []; //存储战场临时生成的敌人，用于重置人物能力状态
   }
   //初始化
   init() {

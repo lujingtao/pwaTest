@@ -40,38 +40,37 @@ export default class Animate {
 
   //旋风斩
   whirlwind(cur, point, map, callBack) {
-    let time = game.animateDuration = 500;
+    let time = 500;
     let $cur = document.getElementById(cur.id);
     $cur.style.transition = time + "ms";
     $cur.style.transform = `rotate(350deg)`;
     setTimeout(() => {
       $cur.style.transition = "0ms";
-      $cur.style.transform = `rotate(0deg)`;
+      $cur.style.transform = ``;
       callBack()
     }, time)
   }
 
   //结束
   end(cur, point, map, callBack) {
-    let time = game.animateDuration = 500;
+    let time = 500;
     setTimeout(() => { callBack() }, time)
   }
 
   //移动
   moveTo(cur, point, map, callBack) {
     console.log(point);
-    let time = game.animateDuration = 500;
+    let time = 500;
     let $cur = document.getElementById(cur.id);
     $cur.style.transition = time + "ms";
     $cur.style.left = `${point[0]*map.unitSize}px`;
     $cur.style.top = `${point[1]*map.unitSize}px`;
-    console.log`${point[0]*map.unitSize}px`;
     setTimeout(() => { callBack() }, time)
   }
 
   //架盾\下盾
   shield(cur, type, callBack) {
-    let time = game.animateDuration = 500;
+    let time = 500;
     let $cur = document.getElementById(cur.id);
     let $rightHand = $cur.querySelector(".rightHand");
     let dis = type == "up" ? -10 : 0;
@@ -82,7 +81,6 @@ export default class Animate {
 
   //攻击
   attack(cur, point, map, callBack) {
-    game.animateDuration = 1800;
     let time = 250;
     let $cur = document.getElementById(cur.id);
     $cur.style.transition = time + "ms";
@@ -109,7 +107,7 @@ export default class Animate {
       setTimeout(() => {
         $tar.style.transform = `translate3d(10px,0,0)`;
         setTimeout(() => {
-          $tar.style.transform = `translate3d(0,0,0)`;
+          $tar.style.transform = ``;
         }, time)
       }, time * 2)
     } else { //被伤害

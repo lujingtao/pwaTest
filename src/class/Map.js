@@ -74,17 +74,6 @@ export default class Map {
       startX = point.pageX - Number(touchArea.style.transform.split("px,")[0].split("(")[1]);
       startY = point.pageY - Number(touchArea.style.transform.split("px,")[1]);
       
-      //拖拽人物
-      // if(game.people.state=="moveRange"){
-      //   let targetPoint = common.getMapPoint(e,game.map.unitSize,game.map.$mapDrag);
-      //   if(common.indexOf2Array( [targetPoint.x,targetPoint.y], game.people.moveRange )!=-1){
-      //     game.people.move(targetPoint);
-      //   }else{
-      //     game.people.state="";
-      //     game.map.draw([],"clear")
-      //   }
-      // }
-      
       touchArea.addEventListener(game.touchMove, move, false);
       touchArea.addEventListener(game.touchEnd, end, false);
     }

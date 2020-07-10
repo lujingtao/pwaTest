@@ -22,7 +22,7 @@
             <li v-for="peo in enemys" :key="peo.id" :id="peo.id" :class="[curPeo==peo?'active':'', peo._state=='end'?'end':'']"
               :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px','fontSize':unitSize+'px'}">
               <Peo :peo="peo"></Peo>
-              <span class="hit" v-if="curPeo && common.indexOf2Array([peo.x,peo.y], curPeo._actionRange) != -1">{{(curPeo._a.hit - peo._a.dod)+"%"}}</span>
+              <span class="hit" v-if="curPeo && common.indexOf2Array([peo.x,peo.y], curPeo._actionRange) != -1">{{(curPeo.hit - peo.dod)+"%"}}</span>
             </li>
           </ul>
           <!-- 我方人员 -->
@@ -59,6 +59,8 @@
 
     <!-- 透明遮罩层（用于执行行动动画时，页面所有元素不能交互） -->
     <div id="animateMask"></div>
+    
+    
   </div>
 </template>
 
@@ -85,7 +87,7 @@
       }
     },
     created() {
-      this.enemyGoods = []; //随机生成的敌方装备
+      this.enemyGoods = []; //存储临时生成的敌人装备，用于结算奖励
       this.mapDiv = 9; //横向屏幕划分多少份
       this.mapSize = { xMax: this.mapDiv - 1, yMax: this.mapDiv - 1 };
       this.map = new Map;
@@ -201,21 +203,15 @@
       isGameOver() {
         this.removeDieUnit(this.peos);
         this.removeDieUnit(this.enemys);
-        if (this.peos.length == 0) {
-          this.$dialog.alert({
-            message: '战斗结束，我方失败',
-          }).then(() => {
-            // on close
-          });
-          return true;
-        } else if (this.enemys.length == 0) {
-          this.$dialog.alert({
-            message: '战斗结束，我方胜利',
-          }).then(() => {
-            // on close
-          });
-          return true;
-        }
+        if( this.peos.length>0 || this.enemys.length>0 ) return;
+        let winer = this.peos.length == 0?2:1;
+        let str = winer==1?"战斗结束，我方胜利":"战斗结束，我方失败";
+        this.$dialog.alert({
+          message: str,
+        }).then(() => {
+          this.$router.push({name:'BattleEnd', params:{ peos:this.peos, enemyGoods:this.enemyGoods}}))
+        });
+        return true;
       },
 
       //检测点击点是否存在单位
@@ -241,9 +237,10 @@
       //初始化我方
       initPeos() {
         game.curSave.myTeam.forEach(peo => {
-          peo.__proto__ = new People;
-          peo.init("our", this.map, this.peos, this.elements, this.enemys);
-          this.peos.push(peo);
+          let peoClone = JSON.parse(JSON.stringify(peo));
+          peoClone.__proto__ = new People;
+          peoClone.init("our", this.map, this.peos, this.elements, this.enemys);
+          this.peos.push(peoClone);
         });
         console.log("我方", this.peos);
         this.putPeos("myTeam");
@@ -253,6 +250,7 @@
       initEnemys() {
         // 根据据点规模生成不同类型敌人
         let size = game.curSave.curNode.size;
+        game.battleTempEnemys = [];
         console.log("据点规模：", size);
         let types = [0, 1, 8, 9, 10]; //敌人类型
         let myTeamCount = game.curSave.myTeam.length;
@@ -276,6 +274,7 @@
         for (var i = 0; i < count; i++) {
           let type = types[common.random(0, types.length - 1)];
           let peo = createPeo(type);
+          game.battleTempEnemys.push( JSON.parse(JSON.stringify(peo)) );
           peo.__proto__ = new People;
           peo.init("enemy", this.map, this.peos, this.elements, this.enemys);
           this.createEnemyEquips(peo);

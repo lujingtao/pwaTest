@@ -46,7 +46,7 @@ export function createPeo(type) {
   peo.damages = 0;
   peo.hits = 0; //命中
   peo.dodges = 0; //闪避
-  peo.crits = 0; //暴击
+  peo.hhs = 0; //暴击
 
   return peo;
 }
@@ -168,17 +168,32 @@ export function getPointRange(p, pAry, map) {
   return ary
 }
 
-//获取攻击结果值
-export function getAtkResult(cur, unit, skill) {
-  console.log(unit);
-  let result = {
-    bh: 0, //破马伤害
-    ba: 0, //破甲伤害
-    pa: 0, //穿甲伤害
-    bs: 0, //破盾伤害
-  }
-  //console.log("当前人员能力，目标能力", cur._a, unit._a);
-  //damge = cur._a.atk * cur_a.pa / 100
-
-  return result;
+//人物存储
+export function peoSave(peo) {
+  let cur = game.curSave.myTeam.find(p => p.id == peo.id);
+  cur.hp = peo.hp;
+  cur.battles = peo.battles;
+  cur.level = peo.level;
+  cur.exp += peo._exp;
+  cur.damages += peo._damages;
+  cur.dodges += peo._dodges;
+  cur.hits += peo._hits;
+  cur.hhs += peo._hhs;
+  cur.kills += peo._kills;
+  cur.buffs = JSON.parse(JSON.stringify(peo.buffs));
+  cur.equip = JSON.parse(JSON.stringify(peo.equip));
+  cur.skills = JSON.parse(JSON.stringify(peo.skills));
 }
+
+//获取攻击结果值
+// export function getAtkResult(cur, unit, skill) {
+//   console.log(unit);
+//   let result = {
+//     bh: 0, //破马伤害
+//     ba: 0, //破甲伤害
+//     pa: 0, //穿甲伤害
+//     bs: 0, //破盾伤害
+//   }
+
+//   return result;
+// }
