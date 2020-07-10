@@ -20,16 +20,16 @@
           <!-- 敌人 -->
           <ul class="peos enemys">
             <li v-for="peo in enemys" :key="peo.id" :id="peo.id" :class="[curPeo==peo?'active':'', peo._state=='end'?'end':'']"
-              :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px','fontSize':unitSize+'px'}">
-              <Peo :peo="peo"></Peo>
+              :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px'}">
+              <Peo :peo="peo" :style="{'fontSize':unitSize+'px','lineHeight':(unitSize-8)+'px'}"></Peo>
               <span class="hit" v-if="curPeo && common.indexOf2Array([peo.x,peo.y], curPeo._actionRange) != -1">{{(curPeo.hit - peo.dod)+"%"}}</span>
             </li>
           </ul>
           <!-- 我方人员 -->
           <ul class="peos myTeam">
             <li v-for="peo in peos" :key="peo.id" :id="peo.id" :class="[curPeo==peo?'active':'', peo._state=='end'?'end':'']"
-              :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px','fontSize':unitSize+'px'}">
-              <Peo :peo="peo"></Peo>
+              :style="{'width':unitSize+'px','height':unitSize+'px','left':unitSize*peo.x+'px','top':unitSize*peo.y+'px'}">
+              <Peo :peo="peo" :style="{'fontSize':unitSize+'px','lineHeight':(unitSize-8)+'px'}"></Peo>
             </li>
           </ul>
           <!-- 地图覆盖层，用于地图交互 -->
@@ -59,8 +59,8 @@
 
     <!-- 透明遮罩层（用于执行行动动画时，页面所有元素不能交互） -->
     <div id="animateMask"></div>
-    
-    
+
+
   </div>
 </template>
 
@@ -87,6 +87,7 @@
       }
     },
     created() {
+      this.tempPeos = []; //存储结算用的我方成员，因为peos的人员会删除
       this.enemyGoods = []; //存储临时生成的敌人装备，用于结算奖励
       this.mapDiv = 9; //横向屏幕划分多少份
       this.mapSize = { xMax: this.mapDiv - 1, yMax: this.mapDiv - 1 };
@@ -97,7 +98,6 @@
     },
     mounted() {
       this.$map = document.getElementById("map");
-      //this.$mapMask = document.getElementById("mapMask");
       this.initMap();
 
       this.AI = new AI({
@@ -106,7 +106,7 @@
         elements: this.elements,
         map: this.map,
       });
-
+      // this.$router.push({ name: 'BattleEnd', params: { winner:1, peos: this.tempPeos, enemyGoods: this.enemyGoods } })
       this.nextRound();
     },
     methods: {
@@ -119,10 +119,10 @@
         this.curPeo.updateAbility(skill);
         if (skill.id == -1) {
           this.curPeo.creatMoveRange();
-        } else{
-          if(skill.rangeID==0){ //自身使用技能
-            this.curPeo.doAction([this.curPeo.x,this.curPeo.y], this.curSkill, this.actionCallBack)
-          }else{
+        } else {
+          if (skill.rangeID == 0) { //自身使用技能
+            this.curPeo.doAction([this.curPeo.x, this.curPeo.y], this.curSkill, this.actionCallBack)
+          } else {
             this.curPeo.creatSkillRange(skill);
           }
         }
@@ -163,29 +163,29 @@
         }
 
       },
-      
+
       //执行动作后的回调事件
-      actionCallBack(){
+      actionCallBack() {
         this.curSkill = null;
-        if( !this.isGameOver() ){
+        if (!this.isGameOver()) {
           this.setEnd(this.peos);
           if (this.isRoundEnd(this.peos)) {
             this.nextRound()
           }
         }
       },
-      
+
       //根据当前Ap情况自动结束自身回合
-      setEnd(ary){
-        ary.forEach(peo=>{
+      setEnd(ary) {
+        ary.forEach(peo => {
           let end = true;
-          for (let i = 0; i < peo._skills.length-1; i++) {
-            if( peo._ap>0 && peo._skills[i].ap <= peo._ap){
+          for (let i = 0; i < peo._skills.length - 1; i++) {
+            if (peo._ap > 0 && peo._skills[i].ap <= peo._ap) {
               end = false;
               break;
             }
           }
-          peo._state = end?"end":peo._state;
+          peo._state = end ? "end" : peo._state;
         })
       },
 
@@ -203,13 +203,13 @@
       isGameOver() {
         this.removeDieUnit(this.peos);
         this.removeDieUnit(this.enemys);
-        if( this.peos.length>0 || this.enemys.length>0 ) return;
-        let winer = this.peos.length == 0?2:1;
-        let str = winer==1?"战斗结束，我方胜利":"战斗结束，我方失败";
+        if (this.peos.length > 0 && this.enemys.length > 0) return;
+        let winner = this.peos.length == 0 ? 2 : 1;
+        let str = winner == 1 ? "战斗结束，我方胜利" : "战斗结束，我方失败";
         this.$dialog.alert({
           message: str,
         }).then(() => {
-          this.$router.push({name:'BattleEnd', params:{ peos:this.peos, enemyGoods:this.enemyGoods}}))
+          this.$router.push({ name: 'BattleEnd', params: { winner:winner, peos: this.tempPeos, enemyGoods: this.enemyGoods } })
         });
         return true;
       },
@@ -241,6 +241,7 @@
           peoClone.__proto__ = new People;
           peoClone.init("our", this.map, this.peos, this.elements, this.enemys);
           this.peos.push(peoClone);
+          this.tempPeos.push(peoClone);
         });
         console.log("我方", this.peos);
         this.putPeos("myTeam");
@@ -274,7 +275,7 @@
         for (var i = 0; i < count; i++) {
           let type = types[common.random(0, types.length - 1)];
           let peo = createPeo(type);
-          game.battleTempEnemys.push( JSON.parse(JSON.stringify(peo)) );
+          game.battleTempEnemys.push(JSON.parse(JSON.stringify(peo)));
           peo.__proto__ = new People;
           peo.init("enemy", this.map, this.peos, this.elements, this.enemys);
           this.createEnemyEquips(peo);
@@ -394,8 +395,6 @@
         option.cols = Math.round((this.mapSize.xMax + 1) * 1);
         option.rows = Math.round((this.mapSize.yMax + 1) * 1);
         this.map.init(option);
-        
-        //this.$mapMask.addEventListener(game.touchStart, this.click_map)
       },
 
       //下一回合
@@ -455,7 +454,7 @@
 
       //点击结束回合按钮
       click_end() {
-        this.peos.forEach(peo=>{
+        this.peos.forEach(peo => {
           peo.action_end()
         })
         this.click_cancle();
@@ -463,8 +462,7 @@
       },
 
     },
-    beforeDestroy() {
-    }
+    beforeDestroy() {}
   }
 </script>
 
@@ -534,8 +532,8 @@
       >li {
         display: inline-block;
         position: absolute;
-        opacity:1;
-        transform:rotate(0deg) scale(1,1);
+        opacity: 1;
+        transform: rotate(0deg) scale(1, 1);
 
         .name {
           display: none;
@@ -667,7 +665,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0);
+      background: rgba(0, 0, 0, 0);
     }
   }
 </style>

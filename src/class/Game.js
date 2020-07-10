@@ -8,6 +8,7 @@ export default class Game {
     this.touchEnd = '';
     this.saveFiles = []; //所有存档
     this.curSave = null; //当前存档内容
+    this.packageMaxCount = 100; //背包最大数量
     this.peosUpdateCount = 8; //人员刷新数量
     this.goodsUpdateCount = 20; //商品刷新数量
     this.battleTempEnemys = []; //存储战场临时生成的敌人，用于重置人物能力状态

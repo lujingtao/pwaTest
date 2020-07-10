@@ -39,28 +39,27 @@
     </dl>
 
     <section class="items">
-      <van-grid :column-num="4" :gutter="10">
-        <van-grid-item v-for="item in items" :key="item.id" :id="'item_'+item.id" @touchend.native.prevent.stop="clickItem(item)"
-          :class="[targetItem&&targetItem.id==item.id?'active':'']">
-          <i :class="['iconfont','icon-'+item.type+'-'+item.qua]"></i>
-          <span class="van-grid-item__text">{{item.name}}</span>
-          <i class="price">${{item.price}}</i>
-          <van-button type="primary" @touchend.native.prevent.stop="confirmItem(item)">装备</van-button>
-
+      <van-grid :column-num="4" :gutter="10" class="goodsList">
+        <van-grid-item v-for="item in items" :key="item.id" @touchend.native.prevent.stop="clickItem(item)"
+          :class="[targetItem&&targetItem.id==item.id?'cur':'']">
+          <Goods :item="item" :showBtn="true" :btnTxt="'装备'" @click_button="confirmItem"></Goods>
         </van-grid-item>
       </van-grid>
     </section>
 
-    <div class="btns">
-      <van-button type="default" block @touchend.native.prevent.stop="click_cancle">取消</van-button>
-    </div>
+  <van-row class="btns">
+    <van-col span="12"><van-button @touchend.native.prevent.stop="click_remove()" block size="small"> 卸 载 </van-button></van-col>
+    <van-col span="12"><van-button @touchend.native.prevent.stop="click_cancle()" block size="small"> 取 消 </van-button></van-col>
+  </van-row>
   </div>
 </template>
 
 <script>
+  import Goods from '@/components/Goods.vue';
   import EquipInfo from "./EquipInfo";
   import { peoSave } from "@/class/Tool.js";
   export default {
+    components: { EquipInfo,Goods },
     props: ['peo', 'equip', 'equipKey'],
     data() {
       return {
@@ -148,6 +147,12 @@
         this.peo.switchEquip(this.equipKey, this.curItem, this.targetItem);
         this.click_cancle();
       },
+      
+      //卸载
+      click_remove(){
+        this.peo.removeEquip(this.equipKey);
+        this.click_cancle()
+      },
 
       click_cancle() {
         peoSave(this.peo);
@@ -155,9 +160,7 @@
       }
     },
     computed: {},
-    components: {
-      EquipInfo
-    }
+
   }
 </script>
 
@@ -169,7 +172,7 @@
     right: 0;
     bottom: 0;
     z-index: 10;
-    background: #333;
+    background: #000;
 
     dl {
       position: absolute;
@@ -185,7 +188,7 @@
     dd {
       margin: 0;
       flex-grow: 1;
-      border-right: 1px solid #444;
+      border-right: 2px solid #000;
       line-height: 2;
       width: 25%;
 
@@ -200,7 +203,7 @@
 
       li {
         min-height: 24px;
-        background: #3e3e3e;
+        background: #131313;
       }
 
       li:nth-child(2n) {
@@ -246,28 +249,17 @@
       bottom: 44px;
       max-height: 200px;
       padding: 10px;
-      background: #404040;
+      background: #000;
       border-top: 1px solid #777;
       border-bottom: 1px solid #777;
-
-      .van-button {
+      
+      .price{
         display: none;
       }
-
-      .active .van-button {
+      .lines{
         display: block;
       }
     }
 
-    .btns {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-
-      .van-button {
-        border-radius: 0;
-      }
-    }
   }
 </style>

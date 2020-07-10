@@ -77,6 +77,9 @@
     bottom: 1px;
     right: 1px;
     left: 2px;
+    font-size: 60px;
+    line-height: 50px;
+    background: #0077AA;
 
     .lines {
       position: absolute;
@@ -113,12 +116,10 @@
     .name {
       font-size: 12px;
       position: absolute;
-      left: 0;
-      bottom: 0;
-      background: #039fff;
-      height: 20px;
-      line-height: 20px;
-      padding: 0 5px;
+      left: 3px;
+      bottom: 3px;
+      line-height: 14px;
+      text-shadow: 1px 1px 2px #000;
     }
 
     .iconfont {

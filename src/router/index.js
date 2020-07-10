@@ -36,7 +36,8 @@ const routes = [{
   {
     path: '/BattleEnd',
     meta: { title: 'BattleEnd' },
-    component: BattleEnd
+    component: BattleEnd,
+    name:'BattleEnd'
   },
   {
     path: '/Option/Save',

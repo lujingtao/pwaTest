@@ -12,19 +12,20 @@
               </div>
               <div v-else>
                 <p>
-                  <span v-if="curItem.canbuy=='true'" class="pull-right" style="color: #d9cc38;">
+                  <span v-if="curItem.price>$store.state.gold" class="pull-right" style="color: #f00;">
+                    ${{curItem.price}}（买不起）
+                  </span>
+                  <span v-else class="pull-right" style="color: #d9cc38;">
                     ${{curItem.price}}
                   </span>
-                  <span v-else class="pull-right" style="color: #f00;">
-                    ${{curItem.price}}（买不起）
-                  </span>物品：<strong>{{curItem.name}}</strong></p>
+                  物品：<strong>{{curItem.name}}</strong></p>
                 <p class="des">描述：{{data.goods[curItem.type].des}}</p>
                 <p v-if="JSON.stringify(curItem.effect) != '{}'">
                   效果：待处理
                 </p>
-                <p v-if="curItem.skills.length>0">
+                <p v-if="itemSkills.length>0">
                   技能：
-                  <van-tag v-for="s in curItem.skills" :key="s" :type="data.skills[s].class=='0'?'default':'success'">{{data.skills[s].type}}</van-tag>
+                  <van-tag v-for="s in itemSkills" :key="s.id" :type="s.class=='0'?'default':'success'">{{s.type}}</van-tag>
                 </p>
                 <ul class="attr">
                   <li>品质：{{curItem.qua}}</li>
@@ -44,19 +45,22 @@
                 </ul>
               </div>
             </div>
-            <van-button style="position: absolute;right:10px;bottom:10px;" size="small" type="primary" @touchend.native.prevent="buyAll()">全部购买</van-button>
+            <van-button style="position: absolute;right:10px;bottom:10px;" size="small" type="primary"
+              @touchend.native.prevent.stop="buyAll()">全部购买</van-button>
           </section>
           <section class="items">
-            <van-grid :column-num="4" :gutter="10">
-              <van-grid-item v-for="item in items" :key="item.id" :id="'item_'+item.id" @touchend.native.prevent="clickItem(item)"
-                :canbuy="item.canbuy">
-                <i :class="['iconfont','icon-'+item.type+'-'+item.qua]"></i>
-                <span class="van-grid-item__text">{{item.name}}</span>
-                <i class="price">${{item.price}}</i>
-                <van-button style="display: none;" v-if="item.canbuy" type="primary" @touchend.native.prevent="buy(item)">购买</van-button>
+            <van-grid :column-num="4" :gutter="10" class="goodsList">
+              <van-grid-item v-for="item in items" :key="item.id" @click="clickItem(item)"
+                :class="[ curItem==item?'cur':'', item.price>$store.state.gold?'disabled':'']">
+                <Goods :item="item" :showBtn="true" :btnTxt="'购买'" @click_button="buy"></Goods>
               </van-grid-item>
             </van-grid>
           </section>
+          
+          <van-row class="btns">
+            <van-col span="12"><van-button @touchend.native.prevent.stop="setGoods('buy')" block size="small" :type="curType=='buy'?'primary':'default'"> 买 入 </van-button></van-col>
+            <van-col span="12"><van-button @touchend.native.prevent.stop="setGoods('sell')" block size="small" :type="curType=='sell'?'primary':'default'"> 卖 出 </van-button></van-col>
+          </van-row>
           <!-- 主内容 E -->
         </div>
       </div>
@@ -66,47 +70,54 @@
   </div>
 </template>
 <script>
-
+  import Goods from '@/components/Goods.vue';
   export default {
+    components: { Goods },
     data() {
       return {
         items: [],
         curItem: null,
+        curType:"buy",
       }
     },
     created() {
-      // game.curSave = game.load(1);
-      // let id = 2;
-      let id = this.$route.query.id;
-      this.items = game.curSave.goods;
-      this.items.sort((a, b) => { return a.price - b.price });
-      this.updateCanBuy();
+      this.setGoods("buy");
+    },
+    computed: {
+      itemSkills() {
+        let ary = [];
+        this.curItem.skills.forEach(id=>{
+          let skill = data.skills.find(s => s.id==id);
+          if(!skill) return;
+          ary.push(skill)
+        })
+        return ary
+      }
     },
     mounted() {
 
     },
     methods: {
-      //更新能否购买状态
-      updateCanBuy() {
-        this.items.forEach(p => {
-          p.canbuy = p.price > game.curSave.gold ? "false" : "true";
-        });
+      setGoods(type){
+        this.curItem = null;
+        this.curType = type;
+        if(type=="sell"){
+          this.items = game.curSave.myGoods;
+        }else{
+          this.items = game.curSave.goods;
+        }
+        this.items.sort((a, b) => { return a.price - b.price });
       },
 
       //点击物品
       clickItem(item) {
         this.curItem = item;
-        document.querySelectorAll(".items .van-button").forEach(e => {
-          e.style.display = "none";
-        });
         if (item.price > game.curSave.gold) return;
-        let ele = document.querySelector("#item_" + item.id + " .van-button");
-        ele.style.display = "block";
       },
 
       //购买
       buy(item) {
-        if(item.canbuy=="false") return;
+        if (item.price > this.$store.state.gold) return;
         //减少金钱
         game.curSave.gold -= item.price;
 
@@ -134,10 +145,10 @@
         }
         this.$store.commit("updateStore");
       },
-      
+
       //全部购买
-      buyAll(){
-        for (var i = this.items.length-1; i >= 0; i--) {
+      buyAll() {
+        for (var i = this.items.length - 1; i >= 0; i--) {
           this.buy(this.items[i])
         }
       }
@@ -154,7 +165,7 @@
     font-size: 12px;
 
     .intro {
-      height: 190px;
+      height: 170px;
       border: 1px solid #777;
       text-align: left;
       line-height: 1.8;
@@ -188,54 +199,26 @@
       }
     }
   }
-  
+
   .items {
     position: absolute;
-    margin: 0 -10px;
+    //margin: 0 -10px;
+    overflow-x: hidden;
     overflow-y: auto;
-    top: 202px;
+    top: 182px;
     left: 0;
-    right: 0;
-    bottom: 0;
-  
-    .item {
-      position: relative;
-    }
-  
-    .van-button {
-      position: absolute;
-      left: 10px;
-      top: 10px;
-      bottom: 10px;
-      right: 10px;
-      height: auto;
-      padding: 0;
-      width: calc(100% - 20px);
-      opacity: .9;
-    }
-  
-    .iconfont {
-      font-size: 28px;
-    }
-  
-    .van-grid-item__text {
-      color: #fff;
-      margin-top: 5px;
-    }
-  
-    .van-grid-item__content {
-      background: #121212;
-    }
-  
-    .van-grid-item[canbuy='false'] .van-grid-item__content {
-      background: #333;
-    }
-  
-    .price {
-      position: absolute;
-      top: 5px;
-      left: 5px;
-    }
+    right: 0px;
+    bottom: 40px;
+  }
+
+  .goodsList .lines {
+    display: none;
   }
   
+  .btns{
+    position: absolute;
+    width: 100%;
+    bottom:0;
+    
+  }
 </style>
