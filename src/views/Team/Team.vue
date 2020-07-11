@@ -4,7 +4,7 @@
 
       <PeoStatus :peo="peo"></PeoStatus>
       <table class="attrTable">
-        <tr>
+        <tr class="title">
           <td colspan="6"><strong>能力</strong></td>
         </tr>
         <tr>
@@ -31,8 +31,11 @@
         </tr>
       </table>
       <table class="attrTable">
-        <tr>
-          <td colspan="6"><strong>属性</strong></td>
+        <tr class="title">
+          <td colspan="6">
+            <van-button class="pull-right" size="mini" type="primary">+ {{peo.levelPoints}}</van-button>
+            <strong>属性</strong>
+          </td>
         </tr>
         <tr>
           <td class="label">生命：</td>
@@ -79,7 +82,7 @@
         <ul>
           <li v-for="(item,key) in peo._equips" @touchend.prevent="click_equip(key)">
             <div class="in">
-              <i v-if="item" :class="['iconfont','icon-'+item.type+'-'+item.qua]"></i>
+              <i v-if="item" :class="['iconfont','icon-'+data.goods.find(g=>g.id==item.type).icon]"></i>
               <span v-else-if="key=='head'">头</span>
               <span v-else-if="key=='other'">饰</span>
               <span v-else-if="key=='body'">身</span>
@@ -89,9 +92,17 @@
           </li>
         </ul>
       </section>
+      
+      <table class="attrTable">
+        <tr class="title">
+          <td colspan="6">
+            <van-button class="pull-right" size="mini" type="primary">+ {{peo.skillPoints}}</van-button>
+            <strong>技能</strong></td>
+        </tr>
+      </table>
 
       <table class="attrTable">
-        <tr>
+        <tr class="title">
           <td colspan="6"><strong>统计</strong></td>
         </tr>
         <tr>
@@ -236,10 +247,17 @@
 
     .attrTable {
       width: 100%;
-      border-top: 1px solid #777;
+      //border-top: 1px solid #777;
       text-align: left;
       margin-bottom: 10px;
-      ;
+      .title td{
+        padding:5px 0;
+        strong{
+          color: #07C160;
+          font-size: 14px;
+          font-weight: normal;
+        }
+      }
 
       .label {
         width: 60px;

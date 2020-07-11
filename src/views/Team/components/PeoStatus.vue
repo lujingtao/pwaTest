@@ -126,8 +126,8 @@
         top: 0;
         display: block;
         height: 100%;
-        background: #15d400;
-        background-image: linear-gradient(to left, #15d400 , #0e9300);
+        background: #07d165;
+        background-image: linear-gradient(to left, #07d165 , #037c3c);
       }
 
       b {
@@ -143,8 +143,8 @@
 
     .dur {
       i {
-        background: #acacac;
-        background-image: linear-gradient(to left, #cfcfcf , #828282);
+        background: #cfcfcf;
+        background-image: linear-gradient(to left, #cfcfcf , #6f6f6f);
       }
     }
   }

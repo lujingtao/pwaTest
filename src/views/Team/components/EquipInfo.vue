@@ -2,7 +2,7 @@
 <template>
   <dd components="EquipInfo" class="EquipInfo">
     <div class="icon icon1">
-      <i v-if="curItem" :class="['iconfont','icon-'+curItem.type+'-'+curItem.qua]"></i>
+      <i v-if="curItem" :class="['iconfont','icon-'+data.goods.find(g=>g.id==curItem.type).icon]"></i>
       <span v-else-if="equipKey=='leftHand'">左</span>
       <span v-else-if="equipKey=='rightHand'">右</span>
       <span v-else-if="equipKey=='head'">头</span>
@@ -11,7 +11,7 @@
     </div>
 
     <ul v-if="curItem">
-      <li>{{data.goods[curItem.type].type}}</li>
+      <li>{{data.goods.find(g=>g.id==curItem.type).type}}</li>
       <li>{{curItem.price}}</li>
       <li>{{curItem.qua}}</li>
       <li>{{curItem.dur+"/"+curItem.durMax}}</li>
@@ -29,7 +29,7 @@
         <van-tag v-for="s in curItem.skill" :key="s" :type="data.skills[s].class=='0'?'default':'success'">{{data.skills[s].type}}</van-tag>
       </li>
       <li>待处理</li>
-      <li>{{data.goods[curItem.type].des}}</li>
+      <li>{{data.goods.find(g=>g.id==curItem.type).des}}</li>
     </ul>
 
     <ul v-else>

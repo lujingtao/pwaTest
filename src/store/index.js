@@ -8,10 +8,11 @@ export default new Vuex.Store({
     gold: 0, 
     date: 0,
     food: 0,
-    repair: 0,
+    tool: 0,
     medication: 0,
     arrow: 0,
-    curNode:null,
+    curNode:null, //当前节点
+    targetNode:null, //用户点击的目标节点
   },
   mutations: {
     updateStore(state, val) {
@@ -19,12 +20,15 @@ export default new Vuex.Store({
       state.date = game.curSave.date;
       state.gold = game.curSave.gold;
       state.food = game.curSave.food;
-      state.repair = game.curSave.repair;
+      state.tool = game.curSave.tool;
       state.medication = game.curSave.medication;
       state.arrow = game.curSave.arrow;
       state.curNode = game.curSave.curNode;
     },
     
+    change_targetNode(state, val){
+      state.targetNode = val;
+    }
   },
   actions: {},
   modules: {}

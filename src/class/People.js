@@ -22,6 +22,7 @@ export default class People {
     this._hhs = 0; //单场暴击，
     this._kills = 0; //单场击杀，
     this._exp = 0; //单场经验，
+    this._level = 0; //战争结算时存储旧的等级，用来获取升了多少级
     this.initAbility();
     this._buffs = []; //存储buff对象数组
     this.initBuffs_(); //初始化buff对象数组
@@ -450,6 +451,20 @@ export default class People {
         this[key] += obj[key];
       }
     }
+  }
+  
+  //统计总经验得出升级级数
+  getLevel(){
+    let exp = this.exp;
+    let lv = 0;
+    for (let i = 0; i < data.exp.length; i++) {
+      exp -= data.exp[i];
+      if(exp<0){
+         lv = i-1;
+         break;
+      }
+    }
+    return lv;
   }
 
   //获取周围四个点的值

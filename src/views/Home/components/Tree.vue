@@ -1,7 +1,7 @@
 <template>
   <ul>
     <li v-for="item in nodes" :key="item.id" :class="item.type" :id="'node-'+item.id">
-      <a :class="'status-'+item.status" @touchend.prevent="click_node(item)">
+      <a :class="'state-'+item.state" @touchend.prevent.stop="click_node(item)">
         <i :class="'iconfont icon-'+['camp','battle','event'][item.type]"></i>
         <span class="size">
           <van-icon v-for="n in item.size" name="star" />
@@ -23,6 +23,7 @@
       //点击节点
       click_node(item) {
         if(game.curSave.curNode == item) return;
+        this.$store.commit("change_targetNode", item);
         switch (item.type) {
           case 2: //事件
             this.showDialog(item, () => {
@@ -53,7 +54,7 @@
       showDialog(item, callBack) {
         this.$dialog.confirm({
             title: '移动到' + item.id,
-            message: ['营地', '战场', '事件'][item.type] + " [" + ['未探索', '已探索', '当前'][item.status]+"]，规模 ["+item.size+"]",
+            message: ['营地', '战场', '事件'][item.type] + " [" + ['未探索', '已探索', '当前'][item.state]+"]，规模 ["+item.size+"]",
           })
           .then(() => {
             if (callBack) {
@@ -65,10 +66,11 @@
 
       //更新当前节点
       updateCurNode(item) {
-        let curNode = this.getCurNode(this.fullNodes);
-        curNode.status = 1;
-        item.status = 2;
+        let curNode = this.getCurNode(game.curSave.nodes);
+        curNode.state = 1;
+        item.state = 2;
         game.curSave.curNode = item;
+        game.curSave.date ++;
         this.$store.commit("updateStore");
       },
 
@@ -76,7 +78,7 @@
       getCurNode(ary) {
         for (var i = 0; i < ary.length; i++) {
           let item = ary[i];
-          if (item.status == 2) return item;
+          if (item.state == 2) return item;
           if (item.children) {
             let res = this.getCurNode(item.children);
             if (res) return res;
@@ -103,13 +105,13 @@
       },
 
       //创建单个地图节点
-      createNode(type, status, depth, parentIndex, index) {
+      createNode(type, state, depth, parentIndex, index) {
         return {
           id: depth + "-" + parentIndex + "-" + index,
           depth: depth,
           index: index,
           type: type, //0:营地， 1:战场  2:事件
-          status: status, //0:未探索， 1:已探索  2:当前
+          state: state, //0:未探索， 1:已探索  2:当前
           size:common.getNumberInAppoint([[1,0.1],[2,0.2],[3,0.4],[4,0.2],[5,0.1]]), //规模
           children: []
         }
@@ -228,13 +230,13 @@
     -moz-transition: all 0.5s;
   }
 
-  .tree li a.status-0 {}
+  .tree li a.state-0 {}
 
-  .tree li a.status-1 {
+  .tree li a.state-1 {
     color: #444;
   }
 
-  .tree li a.status-2 {
+  .tree li a.state-2 {
     color: #55A532;
   }
   

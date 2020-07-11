@@ -21,17 +21,20 @@ const routes = [{
   {
     path: '/Home',
     meta: { title: '世界地图' },
-    component: Home
+    component: Home,
+    name:'Home'
   },
   {
     path: '/Team',
     meta: { title: '队伍' },
-    component: Team
+    component: Team,
+    name:'Team'
   },
   {
     path: '/Battle',
     meta: { title: 'Battle' },
-    component: Battle
+    component: Battle,
+    name:'Battle'
   },
   {
     path: '/BattleEnd',

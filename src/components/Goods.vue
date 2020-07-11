@@ -4,7 +4,7 @@
       <li class="item"><span class="line"><i :style="{'width':Math.round(this.item.dur / this.item.durMax * 100)+'%'}"></i><b>{{item.dur+"/"+item.durMax}}</b></span>
       </li>
     </ul>
-    <i :class="['iconfont','icon-'+item.type+'-'+item.qua]"></i>
+    <i :class="['iconfont','icon-'+data.goods.find(g=>g.id==item.type).icon]"></i>
     <span class="van-grid-item__text">{{item.name}}</span>
     <i class="price">${{item.price}}</i>
     <van-icon v-show="selected" name="success" />

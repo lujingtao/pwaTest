@@ -12,9 +12,9 @@
       </li>
     </ul>
     <span v-if="peo._equips" class="equips">
-      <i v-if="peo._equips.body" :class="['body', 'iconfont','icon-'+peo._equips.body.type+'-'+peo._equips.body.qua]"></i>
-      <i v-if="peo._equips.leftHand" :class="['leftHand', 'iconfont','icon-'+peo._equips.leftHand.type+'-'+peo._equips.leftHand.qua]"></i>
-      <i v-if="peo._equips.rightHand" :class="['rightHand', 'iconfont','icon-'+peo._equips.rightHand.type+'-'+peo._equips.rightHand.qua]"></i>
+      <i v-if="peo._equips.body" :class="['body', 'iconfont','icon-'+data.goods.find(g=>g.id==peo._equips.body.type).icon]"></i>
+      <i v-if="peo._equips.leftHand" :class="['leftHand', 'iconfont','icon-'+data.goods.find(g=>g.id==peo._equips.leftHand.type).icon]"></i>
+      <i v-if="peo._equips.rightHand" :class="['rightHand', 'iconfont','icon-'+data.goods.find(g=>g.id==peo._equips.rightHand.type).icon]"></i>
     </span>
     <div class="name">{{peo.name}}</div>
     <span class="peoAP">
@@ -79,7 +79,7 @@
     left: 2px;
     font-size: 60px;
     line-height: 50px;
-    background: #0077AA;
+    background: #0460BC;
 
     .lines {
       position: absolute;
@@ -104,7 +104,7 @@
       i {
         display: block;
         height: 100%;
-        background: #15d400;
+        background: #07C160;
         transition: 1s;
       }
     }

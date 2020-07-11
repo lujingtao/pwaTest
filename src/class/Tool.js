@@ -27,6 +27,8 @@ export function createPeo(type) {
   peo.id = common.createUniqueId();
   peo.name = common.createRandomName();
   peo.level = 0;
+  peo.levelPoints = 0;
+  peo.skillPoints = 0;
   peo.exp = 0;
   peo.hpMax = peo.hp;
   peo.equip = {
@@ -83,8 +85,8 @@ export function o2o(source, target) {
         //对象
         target[k] = JSON.parse(val);
       } else {
-        //字符串，描述部分读取字典表
-        if (k != "des") target[k] = val;
+        //字符串，描述和图标 读取字典表，减少数据存储
+        if (k != "des" && k != "icon") target[k] = val;
       }
     } else {
       //数字类型
@@ -92,23 +94,6 @@ export function o2o(source, target) {
     }
   }
 }
-
-//获取人员全部技能（默认增加移动技能和结束技能）
-// export function getPeoSkills(peo) {
-//   let leftHandSkills = peo._equips.leftHand ? peo._equips.leftHand.skills : [];
-//   let rightHandSkills = peo._equips.rightHand ? peo._equips.rightHand.skills : [];
-//   let skills = [];
-//   let skillsIdAry = leftHandSkills.concat(rightHandSkills);
-//   skillsIdAry.unshift("-1");
-//   skillsIdAry.push("99");
-//   skillsIdAry.forEach(id => {
-//     let skill = {};
-//     let o = data.skills.find(item => item.id == id);
-//     o2o(o, skill);
-//     skills.push(skill)
-//   });
-//   return skills;
-// }
 
 //获取指定坐标的单位
 export function getPointUnit(p, peos, elements, enemys) {
@@ -174,7 +159,9 @@ export function peoSave(peo) {
   cur.hp = peo.hp;
   cur.battles = peo.battles;
   cur.level = peo.level;
-  cur.exp += peo._exp;
+  cur.exp = peo.exp;
+  cur.levelPoints = peo.levelPoints;
+  cur.skillPoints = peo.skillPoints;
   cur.damages += peo._damages;
   cur.dodges += peo._dodges;
   cur.hits += peo._hits;

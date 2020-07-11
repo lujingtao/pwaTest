@@ -87,8 +87,9 @@
       }
     },
     created() {
-      this.tempPeos = []; //存储结算用的我方成员，因为peos的人员会删除
-      this.enemyGoods = []; //存储临时生成的敌人装备，用于结算奖励
+      this.tempPeos = []; //存储结算用的我方成员，因为peos的人员会被删除
+      this.tempEnemys = []; //存储结算用的敌方成员，因为enemys的人员会被删除
+      //this.enemyGoods = []; //存储临时生成的敌人装备，用于结算奖励
       this.mapDiv = 9; //横向屏幕划分多少份
       this.mapSize = { xMax: this.mapDiv - 1, yMax: this.mapDiv - 1 };
       this.map = new Map;
@@ -106,7 +107,7 @@
         elements: this.elements,
         map: this.map,
       });
-      // this.$router.push({ name: 'BattleEnd', params: { winner:1, peos: this.tempPeos, enemyGoods: this.enemyGoods } })
+      this.$router.push({ name: 'BattleEnd', params: { winner:1, peos: this.tempPeos, enemys:this.tempEnemys } })
       this.nextRound();
     },
     methods: {
@@ -209,7 +210,7 @@
         this.$dialog.alert({
           message: str,
         }).then(() => {
-          this.$router.push({ name: 'BattleEnd', params: { winner:winner, peos: this.tempPeos, enemyGoods: this.enemyGoods } })
+          this.$router.push({ name: 'BattleEnd', params: { winner:1, peos: this.tempPeos, enemys:this.tempEnemys } })
         });
         return true;
       },
@@ -250,7 +251,7 @@
       //初始化敌方
       initEnemys() {
         // 根据据点规模生成不同类型敌人
-        let size = game.curSave.curNode.size;
+        let size = this.$store.state.targetNode.size;
         game.battleTempEnemys = [];
         console.log("据点规模：", size);
         let types = [0, 1, 8, 9, 10]; //敌人类型
@@ -280,7 +281,9 @@
           peo.init("enemy", this.map, this.peos, this.elements, this.enemys);
           this.createEnemyEquips(peo);
           peo.updateAbility();
+          
           this.enemys.push(peo);
+          this.tempEnemys.push(peo);
         }
         this.putPeos("enemys");
         console.log("生成敌方：", this.enemys);
@@ -342,7 +345,7 @@
       peoAddEquip(peo, key, equip) {
         if (!equip) return;
         peo.addEquip(key, equip);
-        this.enemyGoods.push(equip)
+        //this.enemyGoods.push(equip)
       },
 
       //初始化地图元素（障碍物等）

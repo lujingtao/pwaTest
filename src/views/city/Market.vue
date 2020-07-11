@@ -19,7 +19,7 @@
                     ${{curItem.price}}
                   </span>
                   物品：<strong>{{curItem.name}}</strong></p>
-                <p class="des">描述：{{data.goods[curItem.type].des}}</p>
+                <p class="des">描述：{{data.goods.find(g=>g.id==curItem.type).des}}</p>
                 <p v-if="JSON.stringify(curItem.effect) != '{}'">
                   效果：待处理
                 </p>
@@ -127,7 +127,7 @@
             game.curSave.food += 100;
             break;
           case 1:
-            game.curSave.repair += 100;
+            game.curSave.tool += 100;
             break;
           case 2:
             game.curSave.medication += 100;

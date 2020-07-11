@@ -29,7 +29,7 @@
           gold: 999990,
           date: 0,
           food: 30,
-          repair: 100,
+          tool: 100,
           medication: 100,
           arrow: 30,
           myTeam: [],
@@ -63,7 +63,7 @@
       //创建物品
       createGoods() {
         for (let i = 0; i < game.goodsUpdateCount; i++) {
-          let type = common.random(0, data.goods.length - 1);
+          let type = common.random(0, data.goods.length - 2);
           let good = createGood(type);
           game.curSave.goods.push(good);
         }

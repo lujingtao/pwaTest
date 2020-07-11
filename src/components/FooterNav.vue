@@ -71,6 +71,6 @@
   }
 
   .van-tabbar-item--active {
-    color: #ffff79;
+    color: #07C160;
   }
 </style>
