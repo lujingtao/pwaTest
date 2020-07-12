@@ -3,8 +3,8 @@
     <van-tabbar v-model="active">
       <van-tabbar-item id="f_home" to="/home" icon="location-o">地图</van-tabbar-item>
       <van-tabbar-item id="f_team" to="/team" icon="friends-o">队伍</van-tabbar-item>
-      <van-tabbar-item v-if="$store.state.curNode.type==0" id="f_market" to="/city/market" icon="shop-o">商店</van-tabbar-item>
-      <van-tabbar-item v-if="$store.state.curNode.type==0" id="f_tavern" to="/city/tavern" icon="flag-o">招募</van-tabbar-item>
+      <van-tabbar-item id="f_market" to="/city/market" icon="shop-o">商店</van-tabbar-item>
+      <van-tabbar-item id="f_tavern" to="/city/tavern" icon="flag-o">招募</van-tabbar-item>
       <van-tabbar-item id="f_option" icon="setting-o">功能</van-tabbar-item>
     </van-tabbar>
 

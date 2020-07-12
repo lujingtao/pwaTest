@@ -7,54 +7,63 @@
           <van-icon v-for="n in item.size" name="star" />
         </span>
       </a>
-      <Tree v-if="item.children && item.children.length>0" :nodes="item.children" :fullNodes="fullNodes"></Tree>
+      <Tree v-if="item.children && item.children.length>0" :nodes="item.children" :myTeam="myTeam"></Tree>
     </li>
   </ul>
 </template>
 
 <script>
+  import { getCurNodeById } from "@/class/Tool.js"
   export default {
     name: "Tree",
-    props: ['nodes', 'fullNodes'],
+    props: ['nodes', 'myTeam'],
     data() {
       return {}
     },
+
     methods: {
       //点击节点
       click_node(item) {
-        if(game.curSave.curNode == item) return;
+        //当前节点不操作
+        if (game.curSave.curNodeId == item.id) return;
         this.$store.commit("change_targetNode", item);
-        switch (item.type) {
-          case 2: //事件
-            this.showDialog(item, () => {
+
+        this.showDialog(item, () => {
+          game.curSave.myTeam.forEach(peo => { //人员总天数+1
+            peo.dates++;
+          })
+          if (item.state == 1) { //已探索
+            this.updateCurNode(item);
+            return;
+          }
+          switch (item.type) { //未探索
+            case 2: //事件
               this.updateCurNode(item);
               this.createNodes(item);
-            });
-            break;
-          case 1: //战场
-            this.showDialog(item, () => {
+              break;
+            case 1: //战场
               if (game.curSave.myTeam.length == 0) {
                 this.$toast.fail('请先招募队员');
                 return;
               }
               this.$router.push("/battle")
               //this.updateCurNode(item);
-            });
-            break;
-          default: //营地
-            this.showDialog(item, () => {
+              break;
+            default: //营地
               this.updateCurNode(item);
               this.createNodes(item);
-            });
-            break;
-        }
+              break;
+          }
+        });
+
       },
 
       //弹窗
       showDialog(item, callBack) {
         this.$dialog.confirm({
             title: '移动到' + item.id,
-            message: ['营地', '战场', '事件'][item.type] + " [" + ['未探索', '已探索', '当前'][item.state]+"]，规模 ["+item.size+"]",
+            message: ['营地', '战场', '事件'][item.type] + " [" + ['未探索', '已探索', '当前'][item.state] + "]，规模 [" + item.size +
+              "]",
           })
           .then(() => {
             if (callBack) {
@@ -66,32 +75,33 @@
 
       //更新当前节点
       updateCurNode(item) {
-        let curNode = this.getCurNode(game.curSave.nodes);
+        this.recoveryHp();
+
+        let curNode = getCurNodeById(game.curSave.curNodeId, game.curSave.nodes);
+        console.log(curNode, item);
         curNode.state = 1;
         item.state = 2;
-        game.curSave.curNode = item;
-        game.curSave.date ++;
+        game.curSave.curNodeId = item.id;
+        game.curSave.date++;
         this.$store.commit("updateStore");
       },
 
-      //获取当前节点
-      getCurNode(ary) {
-        for (var i = 0; i < ary.length; i++) {
-          let item = ary[i];
-          if (item.state == 2) return item;
-          if (item.children) {
-            let res = this.getCurNode(item.children);
-            if (res) return res;
-          }
-        }
+      //恢复人员血量,每天恢复30%
+      recoveryHp() {
+        console.log(this.myTeam);
+        this.myTeam.forEach(peo => {
+          peo.hp += Math.round(peo.hpMax * 0.3);
+          peo.hp = peo.hp > peo.hpMax ? peo.hpMax : peo.hp;
+
+          let savePeo = game.curSave.myTeam.find(p => p.id == peo.id);
+          savePeo.hp = peo.hp;
+          savePeo.hp = savePeo.hp > savePeo.hpMax ? savePeo.hpMax : savePeo.hp;
+        })
       },
 
       //创建多个地图节点
       createNodes(parent, count) {
         count = count == undefined ? common.random(1, 3) : count;
-        //parent.chilren = [];
-        //this.$set(parent, "children", [])
-        //parent.children = [];
         for (var i = 0; i < count; i++) {
           let type = common.getNumberInAppoint([
             [0, 0.1],
@@ -112,7 +122,13 @@
           index: index,
           type: type, //0:营地， 1:战场  2:事件
           state: state, //0:未探索， 1:已探索  2:当前
-          size:common.getNumberInAppoint([[1,0.1],[2,0.2],[3,0.4],[4,0.2],[5,0.1]]), //规模
+          size: common.getNumberInAppoint([
+            [1, 0.1],
+            [2, 0.2],
+            [3, 0.4],
+            [4, 0.2],
+            [5, 0.1]
+          ]), //规模
           children: []
         }
       }
@@ -239,14 +255,14 @@
   .tree li a.state-2 {
     color: #55A532;
   }
-  
-  .tree li .size{
+
+  .tree li .size {
     position: absolute;
     text-align: center;
-    bottom:-8px;
-    left:-10px;
+    bottom: -8px;
+    left: -10px;
     right: -10px;
     transform: scale(0.6);
-    
+
   }
 </style>

@@ -11,7 +11,7 @@ export default new Vuex.Store({
     tool: 0,
     medication: 0,
     arrow: 0,
-    curNode:null, //当前节点
+    curNodeId:"", //当前节点Id
     targetNode:null, //用户点击的目标节点
   },
   mutations: {
@@ -23,7 +23,7 @@ export default new Vuex.Store({
       state.tool = game.curSave.tool;
       state.medication = game.curSave.medication;
       state.arrow = game.curSave.arrow;
-      state.curNode = game.curSave.curNode;
+      state.curNodeId = game.curSave.curNodeId;
     },
     
     change_targetNode(state, val){

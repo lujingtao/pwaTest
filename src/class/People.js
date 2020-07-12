@@ -449,22 +449,64 @@ export default class People {
       for (let key in obj) {
         if (this[key] == undefined) continue; //位置不能置前
         this[key] += obj[key];
+        if (key == "hpMax" && this.hp == this.hpMax) { //如果是增加最大生命，当满血时，hp也同时增加
+          this.hp += obj.hpMax
+        }
       }
     }
   }
-  
+
   //统计总经验得出升级级数
-  getLevel(){
+  getLevel() {
     let exp = this.exp;
-    let lv = 0;
+    let lv = 20; //最高20级
     for (let i = 0; i < data.exp.length; i++) {
       exp -= data.exp[i];
-      if(exp<0){
-         lv = i-1;
-         break;
+      if (exp < 0) {
+        lv = i - 1;
+        break;
       }
     }
     return lv;
+  }
+
+  //增加技能点数
+  addSkillPoint(curLevel) {
+    if (curLevel > 10) return; //10级后不再增加技能点
+    this.skillPoints++;
+  }
+
+  //增加潜力点数，并创建升级属性
+  addLevelPoint(curLevel) {
+    let result = {};
+
+    var getRandomVal = function(type) {
+      if (curLevel > 10) { //大于10级后没次升级能力值提高都是1
+        return 1;
+      }
+      switch (type) {
+        case 0:
+          return common.random(1, 2);
+          break;
+        case 1:
+          return common.random(1, 3);
+          break;
+        case 2:
+          return common.random(2, 3);
+          break;
+        case 3:
+          return common.random(2, 4);
+          break;
+      }
+    }
+
+    for (let key in this.poten) {
+      result[key] = getRandomVal(this.poten[key]);
+    }
+
+    this.levelPoints++;
+    this.potenUp.push(result);
+    getRandomVal = null;
   }
 
   //获取周围四个点的值

@@ -56,7 +56,8 @@
         nodes.push(Tree.methods.createNode(0,2,0,0,0));
         Tree.methods.createNodes(nodes[0]);
         game.curSave.nodes = nodes;
-        game.curSave.curNode = nodes[0];
+        game.curSave.curNodeId = nodes[0].id;
+        this.$store.commit("updateStore");
         console.log("创建地图节点", game.curSave.nodes);
       },
       

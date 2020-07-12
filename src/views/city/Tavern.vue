@@ -6,7 +6,7 @@
           <!-- 主内容 S -->
           <van-panel v-for="item in peos" :key="item.id" :title="'['+common.getTypeName('peos',item.type)+']'+item.name" :desc="'招募费用：'+item.price+' | 工资：'+item.pay"
             >
-            <van-button :disabled="item.canbuy" type="primary" @click="clickItem(item)">招募</van-button>
+            <van-button :disabled="item.price>$store.state.gold" type="primary" @click="clickItem(item)">招募</van-button>
           </van-panel>
           <!-- 主内容 E -->
         </div>
@@ -26,21 +26,16 @@
       }
     },
     created() {
-      //game.curSave = game.load(1);
-      //let id = 2;
+      // game.curSave.gold = 300;
+      // this.$store.commit("updateStore");
+      
       let id = this.$route.query.id;
       this.peos = game.curSave.peos;
-      this.updateCanBuy();
     },
     mounted() {
 
     },
     methods: {
-      updateCanBuy(){
-        this.peos.forEach(p => {
-          p.canbuy = p.price>game.curSave.gold?true:false;
-        });
-      },
       clickItem(item) {
         this.$dialog.confirm({
           title: '招募',
@@ -54,8 +49,6 @@
           //删除curSave里面的人物
           let index = game.curSave.peos.findIndex( p=>p.id==item.id );
           game.curSave.peos.splice(index,1);
-
-          this.updateCanBuy();
         }).catch(() => {
           // on cancel
         });

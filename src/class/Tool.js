@@ -1,3 +1,15 @@
+//根据id获取当前节点
+export function getCurNodeById(id, nodes) {
+  for (var i = 0; i < nodes.length; i++) {
+    let item = nodes[i];
+    if (item.id == id) return item;
+    if (item.children) {
+      let res = getCurNodeById(id, item.children);
+      if (res) return res;
+    }
+  }
+}
+
 //获取字段某表指定id项目
 export function getDataItem(key, id) {
   let item = {};
@@ -15,6 +27,7 @@ export function createPeo(type) {
   o2o(o, peo);
   //增加潜力
   peo.poten = { hp: 0, pow: 0, agi: 0, skill: 0, luck: 0, will: 0, endu: 0 };
+  peo.potenUp = [];
   for (let s in peo.poten) {
     peo.poten[s] = common.getNumberInAppoint([
       [0, 0.3],
@@ -43,6 +56,7 @@ export function createPeo(type) {
   peo.buffs = [];
   peo.skills = [-1, 99]; //技能，默认添加移动和结束技能
   //数据统计相关
+  peo.dates = 0;
   peo.battles = 0;
   peo.kills = 0;
   peo.damages = 0;
@@ -136,7 +150,7 @@ export function getTriggerRange(p, skillRange, map, cur) {
     //触发范围类型：枚举
     for (let item of skillRange.trigger) {
       let pRange = getPointRange([cur.x, cur.y], item, map);
-      if (common.indexOf2Array([cur.x, cur.y], pRange)) return pRange;
+      if (common.indexOf2Array(p, pRange)!=-1) return pRange;
     }
   }
 }
@@ -167,6 +181,7 @@ export function peoSave(peo) {
   cur.hits += peo._hits;
   cur.hhs += peo._hhs;
   cur.kills += peo._kills;
+  cur.potenUp = JSON.parse(JSON.stringify(peo.potenUp));
   cur.buffs = JSON.parse(JSON.stringify(peo.buffs));
   cur.equip = JSON.parse(JSON.stringify(peo.equip));
   cur.skills = JSON.parse(JSON.stringify(peo.skills));

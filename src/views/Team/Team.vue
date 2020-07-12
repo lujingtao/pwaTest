@@ -3,6 +3,7 @@
     <section class="info" v-if="peo">
 
       <PeoStatus :peo="peo"></PeoStatus>
+      <!-- 能力 -->
       <table class="attrTable">
         <tr class="title">
           <td colspan="6"><strong>能力</strong></td>
@@ -30,10 +31,13 @@
           <td>{{peo.mor}}</td>
         </tr>
       </table>
+
+      <!-- 属性 -->
       <table class="attrTable">
         <tr class="title">
           <td colspan="6">
-            <van-button class="pull-right" size="mini" type="primary">+ {{peo.levelPoints}}</van-button>
+            <van-button v-if="peo.levelPoints>0" @touchend.native.prevent.stop="click_attrUp" class="pull-right" size="mini" type="primary">+
+              {{peo.levelPoints}}</van-button>
             <strong>属性</strong>
           </td>
         </tr>
@@ -52,7 +56,7 @@
           </td>
         </tr>
         <tr>
-          <td class="label">先攻：</td>
+          <td class="label">技巧：</td>
           <td>{{peo.skill}}
             <van-rate v-model="peo.poten.skill" readonly :count="3" />
           </td>
@@ -80,7 +84,7 @@
       <!-- 装备 -->
       <section class="equips" v-if="peo">
         <ul>
-          <li v-for="(item,key) in peo._equips" @touchend.prevent="click_equip(key)">
+          <li v-for="(item,key) in peo._equips" @touchend.prevent.stop="click_equip(key)">
             <div class="in">
               <i v-if="item" :class="['iconfont','icon-'+data.goods.find(g=>g.id==item.type).icon]"></i>
               <span v-else-if="key=='head'">头</span>
@@ -92,15 +96,18 @@
           </li>
         </ul>
       </section>
-      
+
+      <!-- 技能 -->
       <table class="attrTable">
         <tr class="title">
           <td colspan="6">
-            <van-button class="pull-right" size="mini" type="primary">+ {{peo.skillPoints}}</van-button>
-            <strong>技能</strong></td>
+            <van-button v-if="peo.skillPoints>0" class="pull-right" size="mini" type="primary">+ {{peo.skillPoints}}</van-button>
+            <strong>技能</strong>
+          </td>
         </tr>
       </table>
 
+      <!-- 统计 -->
       <table class="attrTable">
         <tr class="title">
           <td colspan="6"><strong>统计</strong></td>
@@ -124,9 +131,10 @@
       </table>
     </section>
 
+    <!-- 底部人员 -->
     <section class="peos">
       <ul>
-        <li v-for="item in peos" :key="item.id" :id="item.id" @touchstart="click_peo(item)" :class="peo.id==item.id?'active':''">
+        <li v-for="item in peos" :key="item.id" :id="item.id" @touchend.prevent.stop="click_peo(item)" :class="peo.id==item.id?'active':''">
           <Peo :peo="item"></Peo>
         </li>
       </ul>
@@ -137,6 +145,9 @@
     <!-- 切换装备 -->
     <SwitchEquip v-if="showSwitchEquip" :peo="peo" :equip="peo._equips[equipKey]" :equipKey="equipKey"
       @SwitchEquip_hide="SwitchEquip_hide"></SwitchEquip>
+
+    <!-- 属性升级 -->
+    <AttributeUp v-if="peo" :peo="peo" ref="AttributeUp"></AttributeUp>
   </div>
 </template>
 
@@ -145,8 +156,9 @@
   import Peo from '@/components/Peo.vue';
   import PeoStatus from './components/PeoStatus.vue';
   import SwitchEquip from './components/SwitchEquip.vue';
+  import AttributeUp from './components/AttributeUp.vue';
   export default {
-    components: { Peo, SwitchEquip, PeoStatus },
+    components: { Peo, SwitchEquip, PeoStatus, AttributeUp },
     data() {
       return {
         divs: 13, //多少格
@@ -154,6 +166,7 @@
         peos: [],
         peo: null,
         equipKey: '',
+        showSwitchEquip: false,
         showSwitchEquip: false,
       }
     },
@@ -163,7 +176,7 @@
         this.$toast.fail('请先招募队员');
         return;
       }
-      game.curSave.myTeam.forEach(peo=>{
+      game.curSave.myTeam.forEach(peo => {
         let peoClone = JSON.parse(JSON.stringify(peo));
         peoClone.__proto__ = new People;
         peoClone.init("our");
@@ -175,11 +188,19 @@
     mounted() {},
     methods: {
 
+      //属性升级
+      click_attrUp() {
+        if(this.peo.levelPoints<=0) return;
+        this.$refs.AttributeUp.showDialog()
+      },
+
+      //点击人员
       click_peo(item) {
         this.peo = item;
         console.log("当前人物：", this.peo);
       },
 
+      //点击装备
       click_equip(key) {
         this.equipKey = key;
         this.showSwitchEquip = true;
@@ -250,9 +271,11 @@
       //border-top: 1px solid #777;
       text-align: left;
       margin-bottom: 10px;
-      .title td{
-        padding:5px 0;
-        strong{
+
+      .title td {
+        padding: 5px 0;
+
+        strong {
           color: #07C160;
           font-size: 14px;
           font-weight: normal;

@@ -107,7 +107,7 @@
         elements: this.elements,
         map: this.map,
       });
-      this.$router.push({ name: 'BattleEnd', params: { winner:1, peos: this.tempPeos, enemys:this.tempEnemys } })
+      //this.$router.push({ name: 'BattleEnd', params: { winner:1, peos: this.tempPeos, enemys:this.tempEnemys } })
       this.nextRound();
     },
     methods: {
@@ -210,7 +210,7 @@
         this.$dialog.alert({
           message: str,
         }).then(() => {
-          this.$router.push({ name: 'BattleEnd', params: { winner:1, peos: this.tempPeos, enemys:this.tempEnemys } })
+          this.$router.push({ name: 'BattleEnd', params: { winner:winner, peos: this.tempPeos, enemys:this.tempEnemys } })
         });
         return true;
       },

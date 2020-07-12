@@ -71,7 +71,7 @@
       this.winner = this.$route.params.winner;
       this.peos = this.$route.params.peos;
       this.enemys = this.$route.params.enemys;
-      this.totalExp = 900; //总经验
+      this.totalExp = 0; //总经验
       
       this.accountReward();
     },
@@ -114,8 +114,12 @@
           peo._exp = Math.round(this.totalExp/this.peos.length);
           peo.exp += peo._exp;
           peo.level = peo.getLevel();
-          peo.levelPoints += peo.level - peo._level;
-          peo.skillPoints += peo.level - peo._level;
+          let levelUps = peo.level - peo._level;
+          //peo.levelPoints += levelUps;
+          for (let i = 1; i <= levelUps; i++) {
+            peo.addLevelPoint(peo._level + i);
+            peo.addSkillPoint(peo._level + i);
+          }
           peo.battles ++;
         })
       },
