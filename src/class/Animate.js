@@ -126,7 +126,7 @@ export default class Animate {
               tar.removeEquip("rightHand");
             }, 200)
           }, 400)
-        } else {
+        } else { //盾牌复原原始大小
           setTimeout(() => {
             $rightHand.style.transform = _transform + " scale(1,1)";
           }, 400)
