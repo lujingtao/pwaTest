@@ -1,7 +1,9 @@
 <!-- 属性升级 -->
 <template>
   <div class="AttributeUp">
-    <van-dialog ref="dialog" v-model="show" title="请选择3个属性" show-cancel-button :confirm-button-color="confirmButtonColor" :before-close="beforeClose" :message-align="'left'">
+    <van-dialog ref="dialog" v-model="show" title="请选择3个属性" show-cancel-button :confirm-button-color="confirmButtonColor"
+      :before-close="beforeClose" :message-align="'left'">
+      <h3>{{peo.name}}</h3>
       <van-checkbox-group v-model="selecedValue" :max="3">
         <van-cell-group>
           <van-cell v-for="(item, index) in list" clickable :key="item.key" :title="`${item.label}`"
@@ -25,37 +27,39 @@
         list: [],
         selecedValue: [],
         show: false,
-        confirmButtonColor:"#666"
+        confirmButtonColor: "#666"
       }
     },
-    created() {
-      // 0星 1-2 1星 1-3 2星 2-3 3星 2-4
-      //{ hp: 0, pow: 0, agi: 0, skill: 0, luck: 0, will: 0, endu: 0 };
-      let str = { hp: "生命", pow: "力量", agi: "敏捷", skill: "技巧", luck: "幸运", will: "意志", endu: "耐力" };
-      let up = this.peo.potenUp[0];
-      for (let key in up) {
-        this.list.push({
-          key: key,
-          val: up[key],
-          label: `${str[key]} + ${up[key]}`
-        })
-      }
-    },
-    mounted() {
-    },
-    
     watch: {
       selecedValue(newValue, oldValue) {
-        if(newValue.length>=3){
-          this.confirmButtonColor="#fff";
-        }else{
-          this.confirmButtonColor="#666";
+        if (newValue.length >= 3) {
+          this.confirmButtonColor = "#fff";
+        } else {
+          this.confirmButtonColor = "#666";
         }
       }
     },
-    
+    created() {
+
+    },
+    mounted() {},
+
     methods: {
       showDialog() {
+        this.list = [];
+        this.selecedValue = [];
+        // 0星 1-2 1星 1-3 2星 2-3 3星 2-4
+        //{ hp: 0, pow: 0, agi: 0, skill: 0, luck: 0, will: 0, endu: 0 };
+        let str = { hp: "生命", pow: "力量", agi: "敏捷", skill: "技巧", luck: "幸运", will: "意志", endu: "耐力" };
+        let up = this.peo.potenUp[0];
+        for (let key in up) {
+          this.list.push({
+            key: key,
+            val: up[key],
+            label: `${str[key]} + ${up[key]}`
+          })
+        }
+        
         this.show = true;
       },
 
@@ -63,30 +67,28 @@
       toggle(index) {
         this.$refs.checkboxes[index].toggle();
       },
-      
+
       //弹窗关闭前触发
       beforeClose(action, done) {
         if (action == 'cancel') { done(); return; }
-        
-        if(this.selecedValue.length<3){
+
+        if (this.selecedValue.length < 3) {
           done(false)
-        }else{
-          let savePeo = game.curSave.myTeam.find( peo=>peo.id == this.peo.id);
-          this.selecedValue.forEach(item=>{
+        } else {
+          let savePeo = game.curSave.myTeam.find(peo => peo.id == this.peo.id);
+          this.selecedValue.forEach(item => {
             savePeo[item.key] += item.val;
-            if(item.key=="hp"){ //如果是hp则，hp和hpMax都增加
+            if (item.key == "hp") { //如果是hp则，hp和hpMax都增加
               savePeo.hpMax += item.val;
               this.peo.hp += item.val;
               this.peo.hpMax += item.val;
             }
           });
-          this.peo.levelPoints --;
+          this.peo.levelPoints--;
           this.peo.potenUp.shift();
           savePeo.levelPoints = this.peo.levelPoints;
           savePeo.potenUp = JSON.parse(JSON.stringify(this.peo.potenUp));
           this.peo.updateAbility();
-          this.selecedValue = [];
-          
           console.log(this.peo.potenUp, savePeo.potenUp);
           done();
         }

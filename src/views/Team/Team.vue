@@ -43,7 +43,7 @@
         </tr>
         <tr>
           <td class="label">生命：</td>
-          <td>{{peo.hp}}
+          <td>{{peo.hpMax}}
             <van-rate v-model="peo.poten.hp" readonly :count="3" />
           </td>
           <td class="label">力量：</td>
@@ -111,6 +111,10 @@
       <table class="attrTable">
         <tr class="title">
           <td colspan="6"><strong>统计</strong></td>
+        </tr>
+        <tr>
+          <td class="label">加入：</td>
+          <td>{{peo.dates}}</td>
         </tr>
         <tr>
           <td class="label">参战：</td>

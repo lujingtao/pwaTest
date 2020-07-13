@@ -28,7 +28,6 @@
         peoClone.init("our");
         this.myTeam.push(peoClone);
       });
-      console.log(this.myTeam);
     },
     mounted() {
       //战斗结束后回传的战斗结果

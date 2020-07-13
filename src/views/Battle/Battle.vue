@@ -272,7 +272,7 @@
         }
 
         //调试模式，只有二个敌人
-        count = 2;
+        //count = 2;
         for (var i = 0; i < count; i++) {
           let type = types[common.random(0, types.length - 1)];
           let peo = createPeo(type);
@@ -355,7 +355,6 @@
 
         let count = common.random(parseInt(maxCount / 2), maxCount);
         //调试，count=0
-        count = 0;
 
         for (let i = 0; i < count; i++) {
           let point = common.creatPoint(this.mapSize.xMax, this.mapSize.yMax, this.map.banPoints);

@@ -95,10 +95,11 @@
     }
       
     .price {
-      position: absolute;
-      top: 2px;
-      left: 5px;
-      right: 5px;
+      display: block;
+      // position: absolute;
+      // top: 28px;
+      // left: 5px;
+      // right: 5px;
       font-size: 14px;
     }
     

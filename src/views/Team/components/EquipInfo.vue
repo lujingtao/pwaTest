@@ -28,7 +28,7 @@
       <li>
         <van-tag v-for="s in curItem.skill" :key="s" :type="data.skills[s].class=='0'?'default':'success'">{{data.skills[s].type}}</van-tag>
       </li>
-      <li>待处理</li>
+      <li>{{JSON.stringify(curItem.effect)}}</li>
       <li>{{data.goods.find(g=>g.id==curItem.type).des}}</li>
     </ul>
 

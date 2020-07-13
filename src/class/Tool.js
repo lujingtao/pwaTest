@@ -67,8 +67,19 @@ export function createPeo(type) {
   return peo;
 }
 
-
 //创建物品
+export function createGoods() {
+  game.curSave.goods = [];
+  for (let i = 0; i < game.goodsUpdateCount; i++) {
+    let type = common.random(0, data.goods.length - 2);
+    let good = createGood(type);
+    game.curSave.goods.push(good);
+  }
+  console.log("创建物品：");
+  console.log(game.curSave.goods);
+}
+
+//创建单个物品
 export function createGood(type) {
   let good = {};
   //先生成类别，根据类别赋予属性，再生成覆盖属性
@@ -77,9 +88,24 @@ export function createGood(type) {
   o2o(o, good);
   good.type = good.id;
   good.id = common.createUniqueId();
+  if (good.type == 4) { //如果是饰品则增加创建效果
+    good.effect = createEffect();
+  }
   good.name = common.getTypeName("goods", good.type) + good.qua.toString();
   good.durMax = good.dur;
   return good;
+}
+
+//创建效果（装备）
+function createEffect() {
+  let effect = {};
+  let keys = ['hpMax', 'pow', 'agi', 'skill', 'luck', 'will', 'endu'];
+  let count = common.random(1,4);
+  for (let i = 0; i < count; i++) {
+    let key = keys.splice( common.random(0,keys.length-1),1 );
+    effect[key] = common.getNumberInAppoint([[1,0.5],[2,0.2],[3,0.15],[4,0.1],[5,0.05]]);
+  }
+  return effect;
 }
 
 //根据数据表赋给对象属性和值
@@ -150,7 +176,7 @@ export function getTriggerRange(p, skillRange, map, cur) {
     //触发范围类型：枚举
     for (let item of skillRange.trigger) {
       let pRange = getPointRange([cur.x, cur.y], item, map);
-      if (common.indexOf2Array(p, pRange)!=-1) return pRange;
+      if (common.indexOf2Array(p, pRange) != -1) return pRange;
     }
   }
 }
@@ -170,7 +196,7 @@ export function getPointRange(p, pAry, map) {
 //人物存储
 export function peoSave(peo) {
   let cur = game.curSave.myTeam.find(p => p.id == peo.id);
-  cur.hp = peo.hp;
+  if(peo.hp<cur.hp){ cur.hp = peo.hp }
   cur.battles = peo.battles;
   cur.level = peo.level;
   cur.exp = peo.exp;

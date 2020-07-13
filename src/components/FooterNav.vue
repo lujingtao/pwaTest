@@ -44,7 +44,6 @@
     methods: {
       onSelect(item) {
         this.showOption = false;
-        console.log(item);
         switch (item.name) {
           case "存档":
             this.$router.push('/option/save');

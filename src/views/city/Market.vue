@@ -21,7 +21,7 @@
                   物品：<strong>{{curItem.name}}</strong></p>
                 <p class="des">描述：{{data.goods.find(g=>g.id==curItem.type).des}}</p>
                 <p v-if="JSON.stringify(curItem.effect) != '{}'">
-                  效果：待处理
+                  效果：{{JSON.stringify(curItem.effect)}}
                 </p>
                 <p v-if="itemSkills.length>0">
                   技能：
@@ -52,14 +52,14 @@
             <van-grid :column-num="4" :gutter="10" class="goodsList">
               <van-grid-item v-for="item in items" :key="item.id" @click="clickItem(item)"
                 :class="[ curItem==item?'cur':'', item.price>$store.state.gold?'disabled':'']">
-                <Goods :item="item" :showBtn="true" :btnTxt="'购买'" @click_button="buy"></Goods>
+                <Goods :item="item" :showBtn="true" :btnTxt="curType" @click_button="handleItem(item)"></Goods>
               </van-grid-item>
             </van-grid>
           </section>
           
           <van-row class="btns">
-            <van-col span="12"><van-button @touchend.native.prevent.stop="setGoods('buy')" block size="small" :type="curType=='buy'?'primary':'default'"> 买 入 </van-button></van-col>
-            <van-col span="12"><van-button @touchend.native.prevent.stop="setGoods('sell')" block size="small" :type="curType=='sell'?'primary':'default'"> 卖 出 </van-button></van-col>
+            <van-col span="12"><van-button @touchend.native.prevent.stop="setGoods('购买')" block size="small" :type="curType=='购买'?'primary':'default'"> 买 入 </van-button></van-col>
+            <van-col span="12"><van-button @touchend.native.prevent.stop="setGoods('卖出')" block size="small" :type="curType=='卖出'?'primary':'default'"> 卖 出 </van-button></van-col>
           </van-row>
           <!-- 主内容 E -->
         </div>
@@ -71,17 +71,19 @@
 </template>
 <script>
   import Goods from '@/components/Goods.vue';
+  import { createGoods } from "@/class/Tool.js"
   export default {
     components: { Goods },
     data() {
       return {
         items: [],
         curItem: null,
-        curType:"buy",
+        curType:"购买",
       }
     },
     created() {
-      this.setGoods("buy");
+      createGoods();
+      this.setGoods("购买");
     },
     computed: {
       itemSkills() {
@@ -101,7 +103,7 @@
       setGoods(type){
         this.curItem = null;
         this.curType = type;
-        if(type=="sell"){
+        if(type=="卖出"){
           this.items = game.curSave.myGoods;
         }else{
           this.items = game.curSave.goods;
@@ -114,12 +116,28 @@
         this.curItem = item;
         if (item.price > game.curSave.gold) return;
       },
+      
+      //点击购买或卖出
+      handleItem(item){
+        if(this.curType=="购买"){
+          this.buy(item)
+        }else{
+          this.sell(item)
+        }
+      },
+      
+      //卖出
+      sell(item){
+        
+      },
 
       //购买
       buy(item) {
         if (item.price > this.$store.state.gold) return;
         //减少金钱
         game.curSave.gold -= item.price;
+        //已购买的物品价值为原价的 1/5
+        item.price = Math.round(item.price/5);
 
         //判断是否消耗品
         switch (item.type) {
@@ -212,7 +230,7 @@
   }
 
   .goodsList .lines {
-    display: none;
+    //display: none;
   }
   
   .btns{

@@ -132,7 +132,7 @@
         this.rewardGoods.forEach((goods=>{
           if(goods.type==-1){ //如果是金币
             game.curSave.gold += goods.price;
-          }else{
+          }else if(this.goodsSelects.indexOf(goods.id)!=-1){
             game.curSave.myGoods.push(goods);
           }
         }));

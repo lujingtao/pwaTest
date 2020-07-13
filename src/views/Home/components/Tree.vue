@@ -13,7 +13,7 @@
 </template>
 
 <script>
-  import { getCurNodeById } from "@/class/Tool.js"
+  import { getCurNodeById, createGoods } from "@/class/Tool.js"
   export default {
     name: "Tree",
     props: ['nodes', 'myTeam'],
@@ -50,6 +50,7 @@
               //this.updateCurNode(item);
               break;
             default: //营地
+              //createGoods();
               this.updateCurNode(item);
               this.createNodes(item);
               break;
@@ -78,7 +79,6 @@
         this.recoveryHp();
 
         let curNode = getCurNodeById(game.curSave.curNodeId, game.curSave.nodes);
-        console.log(curNode, item);
         curNode.state = 1;
         item.state = 2;
         game.curSave.curNodeId = item.id;
@@ -88,7 +88,6 @@
 
       //恢复人员血量,每天恢复30%
       recoveryHp() {
-        console.log(this.myTeam);
         this.myTeam.forEach(peo => {
           peo.hp += Math.round(peo.hpMax * 0.3);
           peo.hp = peo.hp > peo.hpMax ? peo.hpMax : peo.hp;

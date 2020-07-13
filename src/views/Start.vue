@@ -14,7 +14,7 @@
 </template>
 
 <script>
-  import { createPeo, createGood} from "@/class/Tool.js";
+  import { createPeo, createGood, createGoods} from "@/class/Tool.js";
   import Tree from "@/views/Home/components/Tree.vue"
   export default {
     data() {
@@ -36,18 +36,21 @@
           myGoods: [],
           peos: [],
           goods: [],
-          curNode:null
         };
         this.createNodes();
         this.createPeos();
-        this.createGoods();
+        createGoods();
         this.$store.commit("updateStore");
         this.$router.push("/home");
       },
       //更新
       fastLoad(item) {
         this.curSave = game.load(1);
-        this.$router.push("/home")
+        if(this.curSave){
+          this.$router.push("/home")
+        }else{
+          alert("没有存档")
+        }
       },
       
       //创建地图节点
@@ -59,17 +62,6 @@
         game.curSave.curNodeId = nodes[0].id;
         this.$store.commit("updateStore");
         console.log("创建地图节点", game.curSave.nodes);
-      },
-      
-      //创建物品
-      createGoods() {
-        for (let i = 0; i < game.goodsUpdateCount; i++) {
-          let type = common.random(0, data.goods.length - 2);
-          let good = createGood(type);
-          game.curSave.goods.push(good);
-        }
-        console.log("创建物品：");
-        console.log(game.curSave.goods);
       },
       
       //创建人物

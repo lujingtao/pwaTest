@@ -45,6 +45,7 @@ export default class People {
     let unit = ary.find(unit => unit.id == this.id);
 
     this.hpMax = unit.hpMax;
+    this.hp = this.hp>this.hpMax?this.hpMax:this.hp; //hp溢出处理
     this.pow = unit.pow;
     this.agi = unit.agi;
     this.skill = unit.skill;
@@ -253,7 +254,7 @@ export default class People {
     this._hits++;
     this._damages = this._damages + damage + equipDamage;
     this._hhs = this._hhs + (position == "head" ? 1 : 0);
-    this._kills = this.kills + (unit.hp <= 0 ? 1 : 0)
+    this._kills = this._kills + (unit.hp <= 0 ? 1 : 0)
     return { type: unit.hp <= 0 ? 2 : 1, position: position, damage: damage, equipDamage: equipDamage }
   }
 
@@ -448,10 +449,10 @@ export default class People {
     } else {
       for (let key in obj) {
         if (this[key] == undefined) continue; //位置不能置前
-        this[key] += obj[key];
         if (key == "hpMax" && this.hp == this.hpMax) { //如果是增加最大生命，当满血时，hp也同时增加
           this.hp += obj.hpMax
         }
+        this[key] += obj[key];
       }
     }
   }
