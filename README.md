@@ -1,5 +1,7 @@
 # pwa1
 
+[在线](https://lujingtao.github.io/pwaTest/dist/)
+
 ## Project setup
 ```
 npm install
