@@ -1,6 +1,7 @@
 # pwa1
 
-[在线](https://lujingtao.github.io/pwaTest/dist/)
+[github在线](https://lujingtao.github.io/pwaTest/dist/)
+[gitee在线](https://lujingtao.github.io/pwaTest/dist/)
 
 ## Project setup
 ```
